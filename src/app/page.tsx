@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Navbar from "@/components/layout/Navbar";
@@ -49,7 +49,7 @@ const MOCK_ARTWORKS: Artwork[] = Array.from({ length: 24 }, (_, i) => ({
 
 const PAGE_SIZE = 12;
 
-export default function HomePage() {
+function HomeContent() {
   const searchParams = useSearchParams();
   const [category, setCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -167,5 +167,17 @@ export default function HomePage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }
