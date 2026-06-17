@@ -11,7 +11,6 @@ import ArtworkGrid from "@/components/artwork/ArtworkGrid";
 import { type Artwork } from "@/types";
 import { ChevronDown, TrendingUp, Sparkles } from "lucide-react";
 
-// Mock data for demo — replace with Supabase calls
 const MOCK_ARTWORKS: Artwork[] = Array.from({ length: 24 }, (_, i) => ({
   id: `art-${i + 1}`,
   title: [
@@ -36,7 +35,7 @@ const MOCK_ARTWORKS: Artwork[] = Array.from({ length: 24 }, (_, i) => ({
     created_at: new Date().toISOString(),
   },
   tags: ["design", "premium", "template"],
-  resolution: "3840×2160",
+  resolution: "3840x2160",
   file_size: `${(Math.random() * 90 + 10).toFixed(0)} MB`,
   file_format: "PSD, AI, PNG",
   views: Math.floor(Math.random() * 5000 + 500),
@@ -56,7 +55,6 @@ function HomeContent() {
   const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(false);
 
-  // Read URL params
   useEffect(() => {
     const q = searchParams.get("q");
     const cat = searchParams.get("category");
@@ -71,7 +69,6 @@ function HomeContent() {
   });
 
   const trending = [...MOCK_ARTWORKS].sort((a, b) => b.downloads - a.downloads).slice(0, 6);
-  const latest = MOCK_ARTWORKS.slice(0, 6);
   const visible = filtered.slice(0, displayCount);
   const hasMore = displayCount < filtered.length;
 
@@ -98,13 +95,10 @@ function HomeContent() {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Hero */}
       <HeroSection onSearch={handleSearch} totalArtworks={MOCK_ARTWORKS.length} />
 
-      {/* Category Filter */}
       <CategoryFilter active={category} onChange={handleCategoryChange} />
 
-      {/* Trending Section */}
       {category === "all" && !searchQuery && (
         <section id="trending" className="max-w-7xl mx-auto px-4 sm:px-6 mb-12">
           <div className="flex items-center gap-3 mb-6">
@@ -114,13 +108,12 @@ function HomeContent() {
             </div>
             <h2 className="text-xl font-bold text-white">Trending Now</h2>
             <span className="text-xs px-2 py-0.5 rounded-full font-medium"
-              style={{ background: "rgba(251,146,60,0.15)", color: "#fb923c" }}>Hot 🔥</span>
+              style={{ background: "rgba(251,146,60,0.15)", color: "#fb923c" }}>Hot</span>
           </div>
           <ArtworkGrid artworks={trending} />
         </section>
       )}
 
-      {/* Main Grid */}
       <section id="artworks" className="max-w-7xl mx-auto px-4 sm:px-6 mb-16">
         <div className="flex items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
@@ -129,7 +122,11 @@ function HomeContent() {
               <Sparkles size={16} className="text-purple-400" />
             </div>
             <h2 className="text-xl font-bold text-white">
-              {searchQuery ? `Results for "${searchQuery}"` : category === "all" ? "All Artworks" : category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, " ")}
+              {searchQuery
+                ? `Results for "${searchQuery}"`
+                : category === "all"
+                ? "All Artworks"
+                : category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, " ")}
             </h2>
             <span className="text-sm text-text-muted">({filtered.length})</span>
           </div>
@@ -137,7 +134,6 @@ function HomeContent() {
 
         <ArtworkGrid artworks={visible} loading={loading && displayCount === PAGE_SIZE} />
 
-        {/* Load More */}
         {hasMore && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -170,13 +166,20 @@ function HomeContent() {
   );
 }
 
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-10 h-10 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+        <p className="text-text-muted text-sm">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
-      </div>
-    }>
+    <Suspense fallback={<LoadingFallback />}>
       <HomeContent />
     </Suspense>
   );
