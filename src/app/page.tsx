@@ -12,6 +12,7 @@ import AuthModal from "@/components/layout/AuthModal";
 import UserUploadModal from "@/components/upload/UserUploadModal";
 import { type Artwork } from "@/types";
 import { ChevronDown, TrendingUp, Sparkles, Upload, ArrowRight, RefreshCw } from "lucide-react";
+import AnnouncementModal from "@/components/layout/AnnouncementModal";
 import { useAuthStore } from "@/lib/auth-store";
 
 const GUEST_TIMEOUT = 60;
@@ -158,6 +159,8 @@ function HomeContent() {
                 <TrendingUp size={16} className="text-orange-400" />
               </div>
               <h2 className="text-xl font-bold text-white">Trending Now</h2>
+              <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+                style={{ background: "rgba(251,146,60,0.15)", color: "#fb923c" }}>Top</span>
             </div>
             <ArtworkGrid artworks={trending} />
           </section>
@@ -197,13 +200,10 @@ function HomeContent() {
             </motion.div>
           )}
 
-          {/* Empty state with Supabase setup reminder */}
           {!loading && artworks.length === 0 && (
             <div className="text-center py-20">
-              <div className="text-5xl mb-4">📂</div>
               <h3 className="text-xl font-semibold text-white mb-2">No files yet</h3>
-              <p className="text-text-muted text-sm mb-1">Connect Supabase in Vercel environment variables to start.</p>
-              <p className="text-text-muted text-xs">Or add files from the Admin panel.</p>
+              <p className="text-text-muted text-sm">Be the first to upload a file.</p>
             </div>
           )}
         </section>
@@ -231,6 +231,7 @@ function HomeContent() {
         open={uploadOpen}
         onClose={handleUploadDone}
       />
+      <AnnouncementModal />
     </div>
   );
 }
