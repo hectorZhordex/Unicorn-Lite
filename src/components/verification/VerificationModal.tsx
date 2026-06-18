@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { type Artwork } from "@/types";
 import { useVerificationStore } from "@/lib/verification-store";
+import { useSettingsStore } from "@/lib/settings-store";
 import { VERIFICATION_STEPS, VERIFICATION_TIMER, MONETAG_SMARTLINK } from "@/lib/utils";
 import { getSessionId } from "@/lib/utils";
 import toast from "react-hot-toast";
@@ -29,11 +30,17 @@ const REQUIRED = VERIFICATION_STEPS; // 4
 export default function VerificationModal({ artwork, onClose }: Props) {
   const sessionKey = `${artwork.id}_${getSessionId()}`;
   const store = useVerificationStore();
+  const { settings } = useSettingsStore();
+  const adLayerEnabled = settings.adLayerEnabled ?? true;
 
-  // Init session
+  // If ad layer is disabled, redirect immediately on open
   useEffect(() => {
+    if (!adLayerEnabled) {
+      handleDownload();
+      return;
+    }
     store.startVerification(artwork.id, sessionKey);
-  }, []);
+  }, []); // eslint-disable-line
 
   const progress = store.getProgress(sessionKey);
   const unlocked = store.isUnlocked(sessionKey);
