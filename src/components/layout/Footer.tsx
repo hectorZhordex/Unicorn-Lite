@@ -18,15 +18,15 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-1">
             <Link href="/" className="flex items-center gap-2.5 mb-4">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0"
-                style={!settings.logoImage ? { background: "linear-gradient(135deg, #7c3aed, #3b82f6)" } : {}}
-              >
-                {settings.logoImage ? (
-                  <Image src={settings.logoImage} alt="Logo" width={32} height={32} className="w-full h-full object-cover" />
-                ) : (
-                  <Layers size={16} className="text-white" />
-                )}
+              <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
+                <Image
+                  src={settings.logoImage || "/favicon.png"}
+                  alt="Logo"
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover"
+                  unoptimized
+                />
               </div>
               <span className="text-lg font-bold text-white">{settings.logoText}</span>
             </Link>
