@@ -12,6 +12,7 @@ import AuthModal from "@/components/layout/AuthModal";
 import { type Artwork } from "@/types";
 import { ChevronDown, TrendingUp, Sparkles } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
+import { useUploadsStore } from "@/lib/uploads-store";
 
 const GUEST_TIMEOUT = 60; // seconds before blur kicks in
 
@@ -62,6 +63,7 @@ function HomeContent() {
   const [authOpen, setAuthOpen] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { currentUser } = useAuthStore();
+  const { uploads: userUploads } = useUploadsStore();
 
   // 1-minute guest timer
   useEffect(() => {
@@ -84,13 +86,16 @@ function HomeContent() {
     if (cat) setCategory(cat);
   }, [searchParams]);
 
-  const filtered = MOCK_ARTWORKS.filter((a) => {
+  // Merge user uploads with mock artworks — no username attached
+  const allArtworks = [...userUploads, ...MOCK_ARTWORKS];
+
+  const filtered = allArtworks.filter((a) => {
     const matchCategory = category === "all" || a.category_id === category;
     const matchSearch = !searchQuery || a.title.toLowerCase().includes(searchQuery.toLowerCase());
     return matchCategory && matchSearch;
   });
 
-  const trending = [...MOCK_ARTWORKS].sort((a, b) => b.downloads - a.downloads).slice(0, 6);
+  const trending = [...allArtworks].sort((a, b) => b.downloads - a.downloads).slice(0, 6);
   const visible = filtered.slice(0, displayCount);
   const hasMore = displayCount < filtered.length;
 
