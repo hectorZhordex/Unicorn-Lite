@@ -2,9 +2,13 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Upload, CheckCircle2, Image as ImageIcon, FileArchive, ToggleLeft, ToggleRight } from "lucide-react";
+import {
+  X, Upload, CheckCircle2, Image as ImageIcon,
+  Link as LinkIcon, Cloud, ExternalLink, Info
+} from "lucide-react";
 import { useUploadsStore } from "@/lib/uploads-store";
 import { useSettingsStore, parseCategories } from "@/lib/settings-store";
+import { supabase } from "@/lib/supabase";
 import { type Artwork } from "@/types";
 import toast from "react-hot-toast";
 
@@ -25,20 +29,20 @@ export default function UserUploadModal({ open, onClose }: Props) {
     tags: "",
     resolution: "",
     format: "",
-    is_featured: false,
+    downloadLink: "",
   });
   const [previewFile, setPreviewFile] = useState<File | null>(null);
-  const [downloadFile, setDownloadFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState("");
+  const [previewUrl, setPreviewUrl] = useState(""); // local preview for display
   const [uploading, setUploading] = useState(false);
   const [done, setDone] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
 
   const reset = () => {
-    setForm({ title: "", description: "", category: "", tags: "", resolution: "", format: "", is_featured: false });
+    setForm({ title: "", description: "", category: "", tags: "", resolution: "", format: "", downloadLink: "" });
     setPreviewFile(null);
-    setDownloadFile(null);
     setPreviewUrl("");
     setDone(false);
+    setUploadProgress("");
   };
 
   const handleClose = () => { reset(); onClose(); };
@@ -46,50 +50,109 @@ export default function UserUploadModal({ open, onClose }: Props) {
   const handlePreview = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
+    if (f.size > 5 * 1024 * 1024) {
+      toast.error("Preview image must be under 5MB.");
+      return;
+    }
     setPreviewFile(f);
     setPreviewUrl(URL.createObjectURL(f));
   };
 
+  const isValidUrl = (url: string) => {
+    try {
+      const u = new URL(url);
+      return u.protocol === "https:" || u.protocol === "http:";
+    } catch { return false; }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!previewFile) { toast.error("Please upload a preview image."); return; }
-    if (!downloadFile) { toast.error("Please upload a download file."); return; }
+    if (!form.downloadLink.trim()) { toast.error("Please enter a download link."); return; }
+    if (!isValidUrl(form.downloadLink.trim())) { toast.error("Please enter a valid URL (must start with https://)."); return; }
 
     setUploading(true);
-    await new Promise((r) => setTimeout(r, 1500));
+    setUploadProgress("Uploading thumbnail to cloud...");
 
-    // Build artwork object — NO username stored or shown
-    const id = `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-    const slug = form.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + `-${id.slice(-5)}`;
+    try {
+      // Upload preview image to Supabase Storage
+      const ext = previewFile.name.split(".").pop() || "jpg";
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
+      const filePath = `uploads/${fileName}`;
 
-    const newArtwork: Artwork = {
-      id,
-      title: form.title,
-      slug,
-      description: form.description,
-      preview_url: previewUrl, // object URL stored locally
-      download_url: "#",       // in prod: upload to Supabase Storage
-      category_id: form.category,
-      category: categories.find((c) => c.slug === form.category)
-        ? { id: form.category, name: categories.find((c) => c.slug === form.category)!.name, slug: form.category, created_at: new Date().toISOString() }
-        : undefined,
-      tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
-      resolution: form.resolution || undefined,
-      file_size: downloadFile ? `${(downloadFile.size / 1024 / 1024).toFixed(1)} MB` : undefined,
-      file_format: form.format || downloadFile?.name.split(".").pop()?.toUpperCase() || undefined,
-      views: 0,
-      downloads: 0,
-      is_featured: false,
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+      const { data: storageData, error: storageError } = await supabase.storage
+        .from("previews")
+        .upload(filePath, previewFile, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: previewFile.type,
+        });
 
-    addUpload(newArtwork);
-    setUploading(false);
-    setDone(true);
-    toast.success("File uploaded successfully!");
-    setTimeout(() => { handleClose(); }, 1800);
+      if (storageError) {
+        // If Supabase not connected yet, fall back to local object URL
+        console.warn("Supabase storage not available, using local URL:", storageError.message);
+        toast("Supabase not connected — preview stored locally for now.", { icon: "⚠️" });
+      }
+
+      setUploadProgress("Saving file info...");
+
+      // Get public URL from Supabase or fall back to local
+      let finalPreviewUrl = previewUrl;
+      if (!storageError && storageData) {
+        const { data: urlData } = supabase.storage
+          .from("previews")
+          .getPublicUrl(filePath);
+        if (urlData?.publicUrl) {
+          finalPreviewUrl = urlData.publicUrl;
+        }
+      }
+
+      // Build artwork object — NO username stored
+      const id = `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+      const slug = form.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + `-${id.slice(-5)}`;
+
+      const newArtwork: Artwork = {
+        id,
+        title: form.title,
+        slug,
+        description: form.description,
+        preview_url: finalPreviewUrl,
+        download_url: form.downloadLink.trim(), // external link — Google Drive / Dropbox / etc.
+        category_id: form.category,
+        category: categories.find((c) => c.slug === form.category)
+          ? {
+              id: form.category,
+              name: categories.find((c) => c.slug === form.category)!.name,
+              slug: form.category,
+              created_at: new Date().toISOString(),
+            }
+          : undefined,
+        tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+        resolution: form.resolution || undefined,
+        file_size: undefined,
+        file_format: form.format || undefined,
+        views: 0,
+        downloads: 0,
+        is_featured: false,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      addUpload(newArtwork);
+      setUploadProgress("");
+      setUploading(false);
+      setDone(true);
+      toast.success("File uploaded successfully!");
+      setTimeout(() => { handleClose(); }, 2000);
+
+    } catch (err) {
+      setUploading(false);
+      setUploadProgress("");
+      toast.error("Upload failed. Please try again.");
+      console.error(err);
+    }
   };
 
   return (
@@ -126,7 +189,7 @@ export default function UserUploadModal({ open, onClose }: Props) {
               </button>
             </div>
 
-            {/* Form */}
+            {/* Content */}
             <div className="overflow-y-auto flex-1" style={{ scrollbarWidth: "thin", scrollbarColor: "#2a2a55 transparent" }}>
               {done ? (
                 <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
@@ -144,6 +207,7 @@ export default function UserUploadModal({ open, onClose }: Props) {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
+
                   {/* Title */}
                   <div>
                     <label className="block text-sm font-medium text-text-secondary mb-1.5">Title *</label>
@@ -217,16 +281,26 @@ export default function UserUploadModal({ open, onClose }: Props) {
                     </div>
                   </div>
 
-                  {/* Preview Image */}
+                  {/* Preview Image → Supabase */}
                   <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1.5">Preview Image *</label>
+                    <label className="block text-sm font-medium text-text-secondary mb-1.5">
+                      Preview Thumbnail *
+                      <span className="ml-2 text-xs text-purple-400 font-normal">Stored in cloud</span>
+                    </label>
                     <label className="block cursor-pointer">
                       <input type="file" accept="image/*" onChange={handlePreview} className="hidden" />
                       {previewUrl ? (
                         <div className="relative h-36 rounded-xl overflow-hidden group">
                           <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-1">
                             <p className="text-white text-sm font-medium">Change Image</p>
+                            <p className="text-white/60 text-xs">Max 5MB</p>
+                          </div>
+                          {/* Supabase badge */}
+                          <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
+                            style={{ background: "rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.4)", color: "#34d399" }}>
+                            <Cloud size={10} />
+                            Supabase
                           </div>
                         </div>
                       ) : (
@@ -234,35 +308,49 @@ export default function UserUploadModal({ open, onClose }: Props) {
                           className="h-28 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-colors hover:border-purple-500/50"
                           style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.1)" }}
                         >
-                          <ImageIcon size={20} className="text-text-muted" />
-                          <p className="text-sm text-text-muted">Click to upload preview image</p>
+                          <ImageIcon size={22} className="text-text-muted" />
+                          <p className="text-sm text-text-muted">Click to upload thumbnail</p>
+                          <p className="text-xs text-text-muted">PNG, JPG, WebP — max 5MB</p>
                         </div>
                       )}
                     </label>
                   </div>
 
-                  {/* Download File */}
+                  {/* Download Link — external cloud */}
                   <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1.5">Download File *</label>
-                    <label className="block cursor-pointer">
-                      <input type="file" onChange={(e) => setDownloadFile(e.target.files?.[0] || null)} className="hidden" />
-                      <div
-                        className="h-16 rounded-xl border-2 border-dashed flex items-center justify-center gap-3 transition-colors cursor-pointer"
-                        style={{
-                          background: downloadFile ? "rgba(16,185,129,0.05)" : "rgba(255,255,255,0.02)",
-                          borderColor: downloadFile ? "rgba(16,185,129,0.4)" : "rgba(255,255,255,0.1)",
-                        }}
-                      >
-                        {downloadFile ? (
-                          <><CheckCircle2 size={18} className="text-green-400" /><p className="text-sm text-green-400 font-medium truncate max-w-[240px]">{downloadFile.name}</p></>
-                        ) : (
-                          <><FileArchive size={18} className="text-text-muted" /><p className="text-sm text-text-muted">Upload ZIP, PSD, AI or any file</p></>
-                        )}
-                      </div>
+                    <label className="block text-sm font-medium text-text-secondary mb-1.5">
+                      Download Link *
+                      <span className="ml-2 text-xs text-blue-400 font-normal">Google Drive / Dropbox / OneDrive / Any link</span>
                     </label>
+                    <div className="relative">
+                      <LinkIcon size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+                      <input
+                        type="url"
+                        required
+                        value={form.downloadLink}
+                        onChange={(e) => setForm({ ...form, downloadLink: e.target.value })}
+                        placeholder="https://drive.google.com/file/d/..."
+                        className="input-field pl-10"
+                      />
+                    </div>
+
+                    {/* Hint box */}
+                    <div
+                      className="mt-2 flex items-start gap-2.5 p-3 rounded-xl"
+                      style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)" }}
+                    >
+                      <Info size={14} className="text-blue-400 flex-shrink-0 mt-0.5" />
+                      <div className="text-xs text-text-muted space-y-1">
+                        <p className="text-blue-300 font-medium">How to get a shareable link:</p>
+                        <p><span className="text-white">Google Drive:</span> Right-click file → Share → Anyone with link → Copy link</p>
+                        <p><span className="text-white">Dropbox:</span> Click Share → Create link → Copy</p>
+                        <p><span className="text-white">OneDrive:</span> Right-click → Share → Copy link</p>
+                        <p className="pt-1 text-purple-300">When a visitor completes verification, they will be automatically redirected to this link to download.</p>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Notice — no username shown */}
+                  {/* Anonymous notice */}
                   <div
                     className="flex items-start gap-2.5 p-3 rounded-xl text-xs text-text-muted"
                     style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
@@ -271,6 +359,7 @@ export default function UserUploadModal({ open, onClose }: Props) {
                     Your name will not be shown publicly. Files are listed anonymously on the platform.
                   </div>
 
+                  {/* Submit */}
                   <button
                     type="submit"
                     disabled={uploading}
@@ -279,7 +368,7 @@ export default function UserUploadModal({ open, onClose }: Props) {
                     {uploading ? (
                       <span className="flex items-center gap-2">
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Uploading...
+                        {uploadProgress || "Uploading..."}
                       </span>
                     ) : (
                       <span className="flex items-center gap-2"><Upload size={16} />Upload File</span>
