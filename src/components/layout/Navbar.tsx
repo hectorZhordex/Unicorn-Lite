@@ -47,16 +47,20 @@ export default function Navbar() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
         className={cn("fixed top-0 left-0 right-0 z-40 transition-all duration-300", scrolled ? "py-3" : "py-5 bg-transparent")}
-        style={scrolled ? { background: "rgba(5,5,16,0.92)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" } : {}}
+        style={scrolled ? { background: "rgb(8,8,20)" } : {}}
       >
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-4">
-          {/* Logo */}
+          {/* Logo — /favicon.png works on all devices */}
           <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0"
-              style={!settings.logoImage ? { background: "linear-gradient(135deg, #7c3aed, #3b82f6)" } : {}}>
-              {settings.logoImage
-                ? <Image src={settings.logoImage} alt="Logo" width={36} height={36} className="w-full h-full object-cover" />
-                : <Layers size={18} className="text-white" />}
+            <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
+              <Image
+                src={settings.logoImage || "/favicon.png"}
+                alt="Logo"
+                width={36}
+                height={36}
+                className="w-full h-full object-cover"
+                unoptimized
+              />
             </div>
             <span className="text-xl font-bold text-white">{settings.logoText}</span>
           </Link>
@@ -150,7 +154,7 @@ export default function Navbar() {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               className="md:hidden border-t border-white/5"
-              style={{ background: "rgba(5,5,16,0.97)", backdropFilter: "blur(20px)" }}
+              style={{ background: "rgb(8,8,20)" }}
             >
               <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-1">
                 {[["Browse", "/#artworks"], ["Categories", "/#categories"]].map(([label, href]) => (
