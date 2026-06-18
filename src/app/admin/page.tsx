@@ -547,6 +547,16 @@ function SiteSettingsPanel() {
   );
 }
 
+/* inline icon helper used in UploadForm */
+function ExternalLinkIcon() {
+  return (
+    <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+    </svg>
+  );
+}
+
 /* ─────────────────────────── LOGO UPLOADER ─────────────────────────── */
 function LogoUploader({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -623,9 +633,9 @@ function UploadForm() {
   const [form, setForm] = useState({
     title: "", description: "", category: "", tags: "",
     resolution: "", format: "PSD, AI, PNG", is_featured: false,
+    downloadLink: "",
   });
   const [previewFile, setPreviewFile] = useState<File | null>(null);
-  const [downloadFile, setDownloadFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -667,7 +677,7 @@ function UploadForm() {
             <label className="block text-sm font-medium text-text-secondary mb-1.5">Description</label>
             <textarea rows={3} value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="input-field resize-none" placeholder="Describe the artwork..." />
+              className="input-field resize-none" placeholder="Describe the file..." />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -702,9 +712,9 @@ function UploadForm() {
             </div>
           </div>
 
-          {/* Preview Upload */}
+          {/* Preview Image Upload */}
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1.5">Preview Image *</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1.5">Preview Thumbnail *</label>
             <label className="block cursor-pointer">
               <input type="file" accept="image/*" onChange={handlePreview} className="hidden" required />
               {previewUrl ? (
@@ -718,27 +728,36 @@ function UploadForm() {
                 <div className="h-32 rounded-xl border-2 border-dashed border-white/10 hover:border-purple-500/50 flex flex-col items-center justify-center gap-2 transition-colors"
                   style={{ background: "rgba(255,255,255,0.02)" }}>
                   <Upload size={22} className="text-text-muted" />
-                  <p className="text-sm text-text-muted">Click to upload preview image</p>
+                  <p className="text-sm text-text-muted">Click to upload preview thumbnail</p>
                 </div>
               )}
             </label>
           </div>
 
-          {/* Download File */}
+          {/* Download Link — external cloud storage */}
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1.5">Download File *</label>
-            <label className="block cursor-pointer">
-              <input type="file" onChange={(e) => setDownloadFile(e.target.files?.[0] || null)} className="hidden" required />
-              <div className={`h-20 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-colors cursor-pointer ${
-                downloadFile ? "border-green-500/50" : "border-white/10 hover:border-purple-500/50"
-              }`} style={{ background: downloadFile ? "rgba(16,185,129,0.05)" : "rgba(255,255,255,0.02)" }}>
-                {downloadFile ? (
-                  <><CheckCircle2 size={18} className="text-green-400" /><p className="text-sm text-green-400 font-medium truncate px-4">{downloadFile.name}</p></>
-                ) : (
-                  <><Download size={18} className="text-text-muted" /><p className="text-sm text-text-muted">Upload ZIP, PSD, AI file</p></>
-                )}
-              </div>
+            <label className="block text-sm font-medium text-text-secondary mb-1.5">
+              Download Link *
+              <span className="ml-2 text-xs text-blue-400 font-normal">Google Drive / Dropbox / OneDrive / Any link</span>
             </label>
+            <div className="relative">
+              <ExternalLinkIcon />
+              <input
+                type="url"
+                required
+                value={form.downloadLink}
+                onChange={(e) => setForm({ ...form, downloadLink: e.target.value })}
+                placeholder="https://drive.google.com/file/d/..."
+                className="input-field pl-10"
+              />
+            </div>
+            <div className="mt-2 p-3 rounded-xl text-xs text-text-muted"
+              style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)" }}>
+              <p className="text-blue-300 font-medium mb-1">How to get a shareable link:</p>
+              <p><span className="text-white">Google Drive:</span> Right-click file → Share → Anyone with link → Copy</p>
+              <p><span className="text-white">Dropbox:</span> Click Share → Create link → Copy</p>
+              <p className="mt-1 text-purple-300">When a visitor completes verification, they are redirected to this link automatically.</p>
+            </div>
           </div>
 
           {/* Featured */}
@@ -853,5 +872,4 @@ function AnalyticsView({ stats, artworks }: { stats: typeof MOCK_STATS; artworks
     </div>
   );
 }
-
 
