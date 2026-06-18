@@ -9,8 +9,9 @@ import HeroSection from "@/components/artwork/HeroSection";
 import CategoryFilter from "@/components/artwork/CategoryFilter";
 import ArtworkGrid from "@/components/artwork/ArtworkGrid";
 import AuthModal from "@/components/layout/AuthModal";
+import UserUploadModal from "@/components/upload/UserUploadModal";
 import { type Artwork } from "@/types";
-import { ChevronDown, TrendingUp, Sparkles } from "lucide-react";
+import { ChevronDown, TrendingUp, Sparkles, Upload, ArrowRight } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
 import { useUploadsStore } from "@/lib/uploads-store";
 
@@ -61,6 +62,7 @@ function HomeContent() {
   const [loading, setLoading] = useState(false);
   const [guestBlur, setGuestBlur] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { currentUser } = useAuthStore();
   const { uploads: userUploads } = useUploadsStore();
@@ -122,7 +124,47 @@ function HomeContent() {
       {/* Content with blur when guest timer expires */}
       <div className={guestBlur && !currentUser ? "pointer-events-none select-none" : ""}>
         <div style={guestBlur && !currentUser ? { filter: "blur(8px)", transition: "filter 0.5s ease" } : { filter: "none", transition: "filter 0.5s ease" }}>
-          <HeroSection onSearch={handleSearch} totalArtworks={MOCK_ARTWORKS.length} />
+          <HeroSection onSearch={handleSearch} totalArtworks={allArtworks.length} />
+
+          {/* Upload Banner */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 mb-6">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl"
+              style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.12), rgba(59,130,246,0.12))", border: "1px solid rgba(124,58,237,0.2)" }}
+            >
+              <div className="flex items-center gap-3 text-center sm:text-left">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "rgba(124,58,237,0.2)", border: "1px solid rgba(124,58,237,0.3)" }}>
+                  <Upload size={18} className="text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">
+                    {currentUser ? `Welcome, ${currentUser.name}! Share your designs with the community.` : "Have a design to share? Upload your files for free."}
+                  </p>
+                  <p className="text-xs text-text-muted mt-0.5">Files are listed anonymously — your name is never shown publicly.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  if (currentUser) {
+                    setUploadOpen(true);
+                  } else {
+                    setAuthOpen(true);
+                  }
+                }}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white whitespace-nowrap flex-shrink-0 transition-all"
+                style={{ background: "linear-gradient(135deg, #7c3aed, #3b82f6)", boxShadow: "0 4px 15px rgba(124,58,237,0.3)" }}
+              >
+                <Upload size={15} />
+                {currentUser ? "Upload File" : "Sign Up & Upload"}
+                <ArrowRight size={14} />
+              </button>
+            </motion.div>
+          </div>
+
           <CategoryFilter active={category} onChange={handleCategoryChange} />
 
           {category === "all" && !searchQuery && (
@@ -193,6 +235,7 @@ function HomeContent() {
         defaultTab="signup"
         forced={guestBlur && !currentUser}
       />
+      <UserUploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} />
     </div>
   );
 }
