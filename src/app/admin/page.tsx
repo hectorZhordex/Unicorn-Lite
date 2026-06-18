@@ -493,7 +493,7 @@ function SiteSettingsPanel() {
               {field.type === "text" ? (
                 <input
                   type="text"
-                  value={local[field.key as keyof typeof local]}
+                  value={String(local[field.key as keyof typeof local] ?? "")}
                   onChange={(e) => setLocal({ ...local, [field.key]: e.target.value })}
                   placeholder={field.placeholder}
                   className="input-field"
@@ -501,7 +501,7 @@ function SiteSettingsPanel() {
               ) : field.type === "textarea" ? (
                 <textarea
                   rows={3}
-                  value={local[field.key as keyof typeof local]}
+                  value={String(local[field.key as keyof typeof local] ?? "")}
                   onChange={(e) => setLocal({ ...local, [field.key]: e.target.value })}
                   placeholder={field.placeholder}
                   className="input-field resize-none"
@@ -514,7 +514,7 @@ function SiteSettingsPanel() {
               ) : (
                 <textarea
                   rows={10}
-                  value={local[field.key as keyof typeof local]}
+                  value={String(local[field.key as keyof typeof local] ?? "")}
                   onChange={(e) => setLocal({ ...local, [field.key]: e.target.value })}
                   placeholder={field.placeholder}
                   className="input-field resize-none font-mono text-xs"
@@ -920,5 +920,4 @@ function AnalyticsView({ stats, artworks }: { stats: StatsType; artworks: Artwor
     </div>
   );
 }
-
 
