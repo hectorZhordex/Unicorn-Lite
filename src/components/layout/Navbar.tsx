@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Layers, Menu, X, User, LogOut, ChevronDown } from "lucide-react";
+import { Layers, Menu, X, LogOut, ChevronDown, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/lib/settings-store";
 import { useAuthStore } from "@/lib/auth-store";
@@ -12,6 +12,7 @@ import PrivacyModal from "./PrivacyModal";
 import AboutModal from "./AboutModal";
 import TermsModal from "./TermsModal";
 import AuthModal from "./AuthModal";
+import UserUploadModal from "@/components/upload/UserUploadModal";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -22,6 +23,7 @@ export default function Navbar() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authTab, setAuthTab] = useState<"login" | "signup">("login");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const { settings } = useSettingsStore();
   const { currentUser, logout } = useAuthStore();
@@ -212,6 +214,7 @@ export default function Navbar() {
       <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
       <TermsModal open={termsOpen} onClose={() => setTermsOpen(false)} />
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} defaultTab={authTab} />
+      <UserUploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} />
       <UserUploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} />
     </>
   );
