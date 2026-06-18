@@ -115,15 +115,16 @@ export default function VerificationModal({ artwork, onClose }: Props) {
         body: JSON.stringify({ artwork_id: artwork.id, session_id: getSessionId() }),
       });
     } catch {}
-    // Trigger download
-    const a = document.createElement("a");
-    a.href = artwork.download_url;
-    a.download = artwork.title;
-    a.target = "_blank";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    toast.success("Download started! 🎉");
+
+    // Redirect to external download link (Google Drive, Dropbox, etc.)
+    if (artwork.download_url && artwork.download_url !== "#") {
+      toast.success("Redirecting to download...");
+      setTimeout(() => {
+        window.open(artwork.download_url, "_blank", "noopener,noreferrer");
+      }, 400);
+    } else {
+      toast.error("Download link not available.");
+    }
   };
 
   const stepProgress = (progress.completed / REQUIRED) * 100;
@@ -248,8 +249,8 @@ export default function VerificationModal({ artwork, onClose }: Props) {
                   onClick={handleDownload}
                   className="btn-success w-full py-4 text-base"
                 >
-                  <Download size={20} />
-                  Download Now
+                  <ExternalLink size={20} />
+                  Go to Download
                 </button>
               </motion.div>
             ) : phase === "tab_opened" ? (
