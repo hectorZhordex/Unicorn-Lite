@@ -6,7 +6,6 @@ import {
   X, Upload, CheckCircle2, Image as ImageIcon,
   Link as LinkIcon, Cloud, ExternalLink, Info
 } from "lucide-react";
-import { useUploadsStore } from "@/lib/uploads-store";
 import { useSettingsStore, parseCategories } from "@/lib/settings-store";
 import { supabase } from "@/lib/supabase";
 import { type Artwork } from "@/types";
@@ -18,7 +17,6 @@ interface Props {
 }
 
 export default function UserUploadModal({ open, onClose }: Props) {
-  const { addUpload } = useUploadsStore();
   const { settings } = useSettingsStore();
   const categories = parseCategories(settings.categoriesRaw).filter((c) => c.slug !== "all");
 
@@ -108,43 +106,37 @@ export default function UserUploadModal({ open, onClose }: Props) {
         }
       }
 
-      // Build artwork object — NO username stored
-      const id = `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-      const slug = form.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + `-${id.slice(-5)}`;
+      setUploadProgress("Saving to database...");
 
-      const newArtwork: Artwork = {
-        id,
-        title: form.title,
-        slug,
-        description: form.description,
-        preview_url: finalPreviewUrl,
-        download_url: form.downloadLink.trim(), // external link — Google Drive / Dropbox / etc.
-        category_id: form.category,
-        category: categories.find((c) => c.slug === form.category)
-          ? {
-              id: form.category,
-              name: categories.find((c) => c.slug === form.category)!.name,
-              slug: form.category,
-              created_at: new Date().toISOString(),
-            }
-          : undefined,
-        tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
-        resolution: form.resolution || undefined,
-        file_size: undefined,
-        file_format: form.format || undefined,
-        views: 0,
-        downloads: 0,
-        is_featured: false,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
+      // Save to Supabase via API — visible to ALL users immediately
+      const slug = form.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + `-${Date.now()}`;
 
-      addUpload(newArtwork);
+      const res = await fetch("/api/artworks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: form.title,
+          slug,
+          description: form.description,
+          preview_url: finalPreviewUrl,
+          download_url: form.downloadLink.trim(),
+          category_id: form.category || null,
+          tags: form.tags.split(",").map((t: string) => t.trim()).filter(Boolean),
+          resolution: form.resolution || null,
+          file_format: form.format || null,
+          is_featured: false,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Failed to save to database");
+      }
+
       setUploadProgress("");
       setUploading(false);
       setDone(true);
-      toast.success("File uploaded successfully!");
+      toast.success("File uploaded! Visible to all users now.");
       setTimeout(() => { handleClose(); }, 2000);
 
     } catch (err) {
