@@ -108,6 +108,15 @@ export const metadata: Metadata = {
     canonical: "https://unicorn-lite.vercel.app",
   },
   category: "technology",
+  icons: {
+    icon: [
+      { url: "/favicon.png", type: "image/png" },
+    ],
+    apple: [
+      { url: "/favicon.png", type: "image/png" },
+    ],
+    shortcut: "/favicon.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
