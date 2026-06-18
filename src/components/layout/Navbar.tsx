@@ -71,7 +71,16 @@ export default function Navbar() {
           {/* Right — Auth */}
           <div className="hidden md:flex items-center gap-2 flex-shrink-0">
             {currentUser ? (
-              <div className="relative">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setUploadOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all"
+                  style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", color: "#34d399" }}
+                >
+                  <Upload size={14} />
+                  Upload
+                </button>
+                <div className="relative">
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all text-white"
@@ -107,6 +116,7 @@ export default function Navbar() {
                     </motion.div>
                   )}
                 </AnimatePresence>
+              </div>
               </div>
             ) : (
               <>
@@ -158,15 +168,24 @@ export default function Navbar() {
                 ))}
                 <div className="border-t border-white/5 pt-3 mt-1 flex flex-col gap-2">
                   {currentUser ? (
-                    <div className="px-4 py-2 flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-white">{currentUser.name}</p>
-                        <p className="text-xs text-text-muted">{currentUser.email}</p>
-                      </div>
-                      <button onClick={() => { logout(); setMobileOpen(false); }}
-                        className="text-red-400 text-sm flex items-center gap-1">
-                        <LogOut size={14} />Sign Out
+                    <div className="flex flex-col gap-2">
+                      <button
+                        onClick={() => { setUploadOpen(true); setMobileOpen(false); }}
+                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all"
+                        style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", color: "#34d399" }}
+                      >
+                        <Upload size={15} />Upload a File
                       </button>
+                      <div className="px-4 py-2 flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-white">{currentUser.name}</p>
+                          <p className="text-xs text-text-muted">{currentUser.email}</p>
+                        </div>
+                        <button onClick={() => { logout(); setMobileOpen(false); }}
+                          className="text-red-400 text-sm flex items-center gap-1">
+                          <LogOut size={14} />Sign Out
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     <>
@@ -193,6 +212,7 @@ export default function Navbar() {
       <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
       <TermsModal open={termsOpen} onClose={() => setTermsOpen(false)} />
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} defaultTab={authTab} />
+      <UserUploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} />
     </>
   );
 }
