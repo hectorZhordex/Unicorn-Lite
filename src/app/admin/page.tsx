@@ -410,6 +410,48 @@ function SiteSettingsPanel() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+
+      {/* Ad Layer Toggle — shown at the top, outside save flow */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+        className="glass-card rounded-2xl p-5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+            style={{ background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)" }}>
+            <Zap size={17} className="text-purple-400" />
+          </div>
+          <h3 className="text-base font-semibold text-white">Monetization Ad Layer</h3>
+        </div>
+        <div className="flex items-center justify-between p-4 rounded-xl"
+          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+          <div>
+            <p className="text-sm font-medium text-white">
+              {local.adLayerEnabled ? "Ad Layer Enabled" : "Ad Layer Disabled"}
+            </p>
+            <p className="text-xs text-text-muted mt-0.5">
+              {local.adLayerEnabled
+                ? "Visitors must complete verification before downloading."
+                : "Downloads redirect directly to the link — no verification shown."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const updated = { ...local, adLayerEnabled: !local.adLayerEnabled };
+              setLocal(updated);
+              updateSettings({ adLayerEnabled: updated.adLayerEnabled });
+            }}
+            className="flex-shrink-0 transition-all"
+          >
+            {local.adLayerEnabled
+              ? <ToggleRight size={32} className="text-purple-400" />
+              : <ToggleLeft size={32} className="text-text-muted" />}
+          </button>
+        </div>
+        <p className="text-xs text-text-muted mt-2 px-1">
+          Applies to all files site-wide. Changes take effect immediately.
+        </p>
+      </motion.div>
+
       {/* Save bar */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-white">Site Settings</h2>
@@ -878,4 +920,5 @@ function AnalyticsView({ stats, artworks }: { stats: StatsType; artworks: Artwor
     </div>
   );
 }
+
 
