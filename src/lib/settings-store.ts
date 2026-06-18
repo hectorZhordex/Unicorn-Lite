@@ -6,7 +6,9 @@ import { persist } from "zustand/middleware";
 interface SiteSettings {
   // Logo
   logoText: string;
-  logoImage: string; // base64 data URL or empty string
+  logoImage: string;
+  // Monetization
+  adLayerEnabled: boolean; // when false, skip verification and redirect directly
   // Hero
   heroHeadlineLine1: string;
   heroHeadlineLine2: string;
@@ -30,6 +32,7 @@ interface SettingsStore {
 const DEFAULT: SiteSettings = {
   logoText: "BlueOrbit",
   logoImage: "",
+  adLayerEnabled: true,
   heroHeadlineLine1: "Download Premium",
   heroHeadlineLine2: "Design Assets",
   heroSubtitle: "Logos, mockups, PSDs, posters, flyers and more. Unlock for free with quick verification.",
