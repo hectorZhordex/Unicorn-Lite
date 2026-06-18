@@ -16,45 +16,11 @@ import {
 import { type Artwork } from "@/types";
 import { formatNumber, timeAgo } from "@/lib/utils";
 import { useSettingsStore, parseCategories } from "@/lib/settings-store";
+import toast from "react-hot-toast";
 
 const ADMIN_PASSWORD = "admin@@@900";
 
-const MOCK_STATS = {
-  total_artworks: 48,
-  total_downloads: 12540,
-  total_views: 84320,
-  total_verifications: 31200,
-};
-
-const MOCK_ARTWORKS: Artwork[] = Array.from({ length: 8 }, (_, i) => ({
-  id: `art-${i + 1}`,
-  title: [
-    "Modern Brand Identity Pack", "Neon City Wallpaper", "Corporate Flyer Template",
-    "Mobile App Mockup Kit", "Gradient Logo Collection", "Social Media Bundle",
-    "Dark UI Components", "Photography Poster",
-  ][i],
-  slug: `artwork-${i + 1}`,
-  description: "Premium design resource",
-  preview_url: `https://picsum.photos/seed/${i + 10}/400/300`,
-  download_url: "#",
-  category_id: ["logos", "posters", "flyers", "mockups"][i % 4],
-  category: {
-    id: `cat-${i % 4}`,
-    name: ["Logos", "Posters", "Flyers", "Mockups"][i % 4],
-    slug: ["logos", "posters", "flyers", "mockups"][i % 4],
-    created_at: new Date().toISOString(),
-  },
-  tags: ["design", "premium"],
-  resolution: "4K",
-  file_size: `${(Math.random() * 90 + 10).toFixed(0)} MB`,
-  file_format: "PSD, AI, PNG",
-  views: Math.floor(Math.random() * 5000 + 500),
-  downloads: Math.floor(Math.random() * 2000 + 100),
-  is_featured: i < 2,
-  is_active: i !== 3,
-  created_at: new Date(Date.now() - i * 86400000 * 2).toISOString(),
-  updated_at: new Date().toISOString(),
-}));
+// Stats and artworks loaded from Supabase in the component
 
 type AdminTab = "dashboard" | "artworks" | "upload" | "analytics" | "settings";
 
@@ -63,8 +29,25 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [pwError, setPwError] = useState("");
   const [tab, setTab] = useState<AdminTab>("dashboard");
-  const [artworks, setArtworks] = useState(MOCK_ARTWORKS);
+  const [artworks, setArtworks] = useState<Artwork[]>([]);
+  const [stats, setStats] = useState({ total_artworks: 0, total_downloads: 0, total_views: 0, total_verifications: 0 });
+  const [statsLoading, setStatsLoading] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // Load real data from Supabase
+  useEffect(() => {
+    if (!authenticated) return;
+    // Fetch artworks
+    fetch("/api/artworks?limit=50")
+      .then((r) => r.json())
+      .then((d) => setArtworks(d.artworks || []))
+      .catch(() => {});
+    // Fetch stats
+    fetch("/api/stats")
+      .then((r) => r.json())
+      .then((d) => { setStats(d); setStatsLoading(false); })
+      .catch(() => setStatsLoading(false));
+  }, [authenticated]);
 
   useEffect(() => {
     const auth = sessionStorage.getItem("artflow_admin_auth");
@@ -142,10 +125,10 @@ export default function AdminPage() {
   ];
 
   const statCards = [
-    { icon: Images, label: "Total Artworks", value: MOCK_STATS.total_artworks, color: "#7c3aed", delta: "+3 this week" },
-    { icon: Download, label: "Downloads", value: formatNumber(MOCK_STATS.total_downloads), color: "#3b82f6", delta: "+842 today" },
-    { icon: Eye, label: "Total Views", value: formatNumber(MOCK_STATS.total_views), color: "#10b981", delta: "+2.1K today" },
-    { icon: Zap, label: "Verifications", value: formatNumber(MOCK_STATS.total_verifications), color: "#f59e0b", delta: "+1.2K today" },
+    { icon: Images, label: "Total Files", value: statsLoading ? "..." : stats.total_artworks, color: "#7c3aed" },
+    { icon: Download, label: "Downloads", value: statsLoading ? "..." : formatNumber(stats.total_downloads), color: "#3b82f6" },
+    { icon: Eye, label: "Total Views", value: statsLoading ? "..." : formatNumber(stats.total_views), color: "#10b981" },
+    { icon: Zap, label: "Verifications", value: statsLoading ? "..." : formatNumber(stats.total_verifications), color: "#f59e0b" },
   ];
 
   return (
@@ -232,9 +215,7 @@ export default function AdminPage() {
                         style={{ background: `${color}22`, border: `1px solid ${color}44` }}>
                         <Icon size={17} style={{ color }} />
                       </div>
-                      <span className="text-xs text-green-400 hidden sm:flex items-center gap-1">
-                        <TrendingUp size={11} />{delta}
-                      </span>
+
                     </div>
                     <p className="text-xl sm:text-2xl font-bold text-white">{value}</p>
                     <p className="text-xs text-text-muted mt-1">{label}</p>
@@ -339,7 +320,7 @@ export default function AdminPage() {
           {tab === "upload" && <UploadForm />}
 
           {/* ANALYTICS */}
-          {tab === "analytics" && <AnalyticsView stats={MOCK_STATS} artworks={artworks} />}
+          {tab === "analytics" && <AnalyticsView stats={stats} artworks={artworks} />}
 
           {/* SETTINGS */}
           {tab === "settings" && <SiteSettingsPanel />}
@@ -647,11 +628,35 @@ function UploadForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.downloadLink.trim()) { toast.error("Please enter a download link."); return; }
     setUploading(true);
-    await new Promise((r) => setTimeout(r, 2000));
-    setUploading(false);
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
+    try {
+      const slug = form.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + `-${Date.now()}`;
+      const res = await fetch("/api/artworks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: form.title,
+          slug,
+          description: form.description,
+          preview_url: previewUrl || "https://picsum.photos/seed/admin/800/600",
+          download_url: form.downloadLink.trim(),
+          category_id: form.category || null,
+          tags: form.tags.split(",").map((t: string) => t.trim()).filter(Boolean),
+          resolution: form.resolution || null,
+          file_format: form.format || null,
+          is_featured: form.is_featured,
+        }),
+      });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+      setUploading(false);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+      toast.success("File saved to database!");
+    } catch (err: any) {
+      setUploading(false);
+      toast.error(err.message || "Upload failed.");
+    }
   };
 
   const { settings } = useSettingsStore();
@@ -795,7 +800,8 @@ function UploadForm() {
 }
 
 /* ─────────────────────────── ANALYTICS ─────────────────────────── */
-function AnalyticsView({ stats, artworks }: { stats: typeof MOCK_STATS; artworks: Artwork[] }) {
+interface StatsType { total_artworks: number; total_downloads: number; total_views: number; total_verifications: number; }
+function AnalyticsView({ stats, artworks }: { stats: StatsType; artworks: Artwork[] }) {
   const topArtworks = [...artworks].sort((a, b) => b.downloads - a.downloads);
 
   return (
@@ -872,4 +878,5 @@ function AnalyticsView({ stats, artworks }: { stats: typeof MOCK_STATS; artworks
     </div>
   );
 }
+
 
