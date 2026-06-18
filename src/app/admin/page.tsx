@@ -207,7 +207,7 @@ export default function AdminPage() {
           {tab === "dashboard" && (
             <div className="space-y-6">
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                {statCards.map(({ icon: Icon, label, value, color, delta }, i) => (
+                {statCards.map(({ icon: Icon, label, value, color }, i) => (
                   <motion.div key={label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.08 }} className="glass-card rounded-2xl p-4 sm:p-5">
                     <div className="flex items-start justify-between mb-3 sm:mb-4">
@@ -878,5 +878,4 @@ function AnalyticsView({ stats, artworks }: { stats: StatsType; artworks: Artwor
     </div>
   );
 }
-
 
