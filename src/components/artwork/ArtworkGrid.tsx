@@ -41,9 +41,8 @@ export default function ArtworkGrid({ artworks, loading }: Props) {
   if (artworks.length === 0) {
     return (
       <div className="text-center py-20">
-        <div className="text-6xl mb-4">🎨</div>
-        <h3 className="text-xl font-semibold text-text-primary mb-2">No artworks found</h3>
-        <p className="text-text-muted">Try a different search or category</p>
+        <h3 className="text-xl font-semibold text-text-primary mb-2">No files found</h3>
+        <p className="text-text-muted text-sm">Try a different search or category</p>
       </div>
     );
   }
