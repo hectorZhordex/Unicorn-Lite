@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Eye, EyeOff, User, Mail, Lock, ShieldCheck, RefreshCw } from "lucide-react";
+import { X, Eye, EyeOff, User, Mail, Lock, MailCheck, ArrowLeft } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
 import toast from "react-hot-toast";
 
@@ -13,41 +13,29 @@ interface Props {
   forced?: boolean;
 }
 
-// ─── Helper: generate a random 6-digit OTP ───────────────────────────────────
-function generateOtp() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
 export default function AuthModal({ open, onClose, defaultTab = "login", forced = false }: Props) {
   const [tab, setTab] = useState<"login" | "signup">(defaultTab);
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { login, validateNewUser, register } = useAuthStore();
-
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
 
-  // ── Email-verification OTP state ──────────────────────────────────────────
-  const [verifyStep, setVerifyStep] = useState(false);          // show OTP screen?
-  const [otp, setOtp] = useState("");                           // generated code
-  const [otpInput, setOtpInput] = useState("");                 // user's typed code
-  const [pendingUser, setPendingUser] = useState<{ name: string; email: string; password: string } | null>(null);
-  const [resendCooldown, setResendCooldown] = useState(0);      // seconds left before resend allowed
-  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // After successful signup, show the "check your email" screen
+  const [emailSentTo, setEmailSentTo] = useState<string | null>(null);
 
-  // ── Reset everything when modal opens/closes or tab switches ─────────────
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
+
+  const { login, register } = useAuthStore();
+
+  // ── Sync tab with prop ────────────────────────────────────────────────────
+  useEffect(() => { setTab(defaultTab); }, [defaultTab]);
+
+  // ── Reset on open/close or tab change ────────────────────────────────────
   useEffect(() => {
     setError("");
     setForm({ name: "", email: "", password: "" });
-    setVerifyStep(false);
-    setOtp("");
-    setOtpInput("");
-    setPendingUser(null);
-    setResendCooldown(0);
-    if (cooldownRef.current) clearInterval(cooldownRef.current);
+    setEmailSentTo(null);
+    setShowPw(false);
   }, [tab, open]);
-
-  useEffect(() => { setTab(defaultTab); }, [defaultTab]);
 
   // ── ESC to close ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -59,62 +47,18 @@ export default function AuthModal({ open, onClose, defaultTab = "login", forced 
 
   // ── Body scroll lock ──────────────────────────────────────────────────────
   useEffect(() => {
-    if (open) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "";
+    document.body.style.overflow = open ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [open]);
-
-  // ── Start resend cooldown (60 s) ─────────────────────────────────────────
-  const startCooldown = () => {
-    setResendCooldown(60);
-    cooldownRef.current = setInterval(() => {
-      setResendCooldown((s) => {
-        if (s <= 1) {
-          if (cooldownRef.current) clearInterval(cooldownRef.current);
-          return 0;
-        }
-        return s - 1;
-      });
-    }, 1000);
-  };
-
-  // ── Send (or resend) the OTP ─────────────────────────────────────────────
-  const sendOtp = (email: string): string => {
-    const code = generateOtp();
-    setOtp(code);
-    setOtpInput("");
-    setError("");
-
-    // In a real app you would call your email API here.
-    // Since this project uses localStorage only, we show the code in a toast.
-    toast(
-      (t) => (
-        <div>
-          <p className="font-semibold text-sm">📧 Verification email sent to</p>
-          <p className="text-xs text-slate-400 mt-0.5">{email}</p>
-          <p className="mt-2 text-xs text-slate-300">
-            Your code: <span className="font-mono font-bold text-purple-300 text-base">{code}</span>
-          </p>
-          <p className="text-[10px] text-slate-500 mt-1">(Shown here because no email backend is connected)</p>
-        </div>
-      ),
-      { duration: 20000 }
-    );
-
-    startCooldown();
-    return code;
-  };
 
   // ── Form submit ───────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 350));
 
     if (tab === "login") {
-      // ── Login flow (unchanged) ────────────────────────────────────────────
-      const res = login(form.email, form.password);
+      const res = await login(form.email, form.password);
       if (res.success) {
         toast.success("Welcome back!");
         onClose();
@@ -122,47 +66,17 @@ export default function AuthModal({ open, onClose, defaultTab = "login", forced 
         setError(res.error || "Login failed.");
       }
     } else {
-      // ── Signup: validate first WITHOUT creating the account ───────────────
-      const validation = validateNewUser(form.name, form.email, form.password);
-      if (!validation.success) {
-        setError(validation.error || "Invalid details.");
-        setLoading(false);
-        return;
+      // Sign up → Supabase sends real verification email
+      const res = await register(form.name, form.email, form.password);
+      if (res.success) {
+        // Show "check your inbox" screen
+        setEmailSentTo(form.email);
+      } else {
+        setError(res.error || "Registration failed.");
       }
-
-      // Store pending registration data, then show OTP screen
-      setPendingUser({ name: form.name, email: form.email, password: form.password });
-      sendOtp(form.email);
-      setVerifyStep(true);
     }
 
     setLoading(false);
-  };
-
-  // ── OTP submit ────────────────────────────────────────────────────────────
-  const handleVerifyOtp = () => {
-    if (!pendingUser) return;
-    if (otpInput.trim() !== otp) {
-      setError("Incorrect code. Please check your email and try again.");
-      return;
-    }
-
-    // OTP is correct → create the account now
-    const res = register(pendingUser.name, pendingUser.email, pendingUser.password);
-    if (res.success) {
-      toast.success("✅ Email verified! Welcome aboard 🎉");
-      onClose();
-    } else {
-      setError(res.error || "Registration failed. Please try again.");
-    }
-  };
-
-  // ── Resend OTP ────────────────────────────────────────────────────────────
-  const handleResend = () => {
-    if (!pendingUser || resendCooldown > 0) return;
-    const newCode = sendOtp(pendingUser.email);
-    setOtp(newCode);
-    toast.success("New code sent!");
   };
 
   return (
@@ -188,123 +102,103 @@ export default function AuthModal({ open, onClose, defaultTab = "login", forced 
               boxShadow: "0 24px 80px rgba(0,0,0,0.8)",
             }}
           >
-            {/* ── Header ─────────────────────────────────────────────────── */}
-            <div className="px-6 pt-6 pb-4 flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-white">
-                  {verifyStep
-                    ? "Verify your email"
-                    : tab === "login"
-                    ? "Welcome back"
-                    : "Create account"}
-                </h2>
-                {forced && !verifyStep && (
-                  <p className="text-xs text-text-muted mt-1">
-                    Sign in or create a free account to continue
-                  </p>
-                )}
-              </div>
-              {!forced && (
-                <button
-                  onClick={onClose}
-                  className="p-2 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-colors"
-                >
-                  <X size={18} />
-                </button>
-              )}
-            </div>
 
             {/* ══════════════════════════════════════════════════════════════
-                OTP VERIFICATION SCREEN
+                CHECK YOUR EMAIL SCREEN
+                Shown after a successful signUp call.
             ══════════════════════════════════════════════════════════════ */}
-            {verifyStep ? (
-              <div className="px-6 pb-6 space-y-5">
-                {/* Icon + description */}
-                <div className="flex flex-col items-center gap-2 py-2">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", damping: 14, stiffness: 260 }}
-                    className="w-14 h-14 rounded-full flex items-center justify-center mb-1"
-                    style={{
-                      background: "rgba(124,58,237,0.15)",
-                      border: "1px solid rgba(124,58,237,0.35)",
-                    }}
-                  >
-                    <ShieldCheck size={26} className="text-purple-400" />
-                  </motion.div>
-                  <p className="text-sm font-medium text-white text-center">
-                    We sent a 6-digit code to
-                  </p>
-                  <p className="text-sm text-purple-300 font-semibold">{pendingUser?.email}</p>
-                  <p className="text-xs text-slate-500 text-center mt-1">
-                    Enter the code below to activate your account.
-                  </p>
-                </div>
-
-                {/* OTP input */}
-                <div className="relative">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={6}
-                    placeholder="• • • • • •"
-                    value={otpInput}
-                    onChange={(e) => {
-                      setOtpInput(e.target.value.replace(/\D/g, ""));
-                      setError("");
-                    }}
-                    onKeyDown={(e) => { if (e.key === "Enter" && otpInput.length === 6) handleVerifyOtp(); }}
-                    className="input-field text-center tracking-[0.5em] text-xl font-bold py-4"
-                    autoFocus
-                    autoComplete="one-time-code"
-                  />
-                </div>
-
-                {error && <p className="text-red-400 text-xs px-1 text-center">{error}</p>}
-
-                {/* Verify button */}
-                <button
-                  type="button"
-                  onClick={handleVerifyOtp}
-                  disabled={otpInput.length !== 6}
-                  className="btn-primary w-full py-3.5 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+            {emailSentTo ? (
+              <div className="px-6 py-8 flex flex-col items-center text-center gap-4">
+                {/* Icon */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", damping: 14, stiffness: 260 }}
+                  className="w-16 h-16 rounded-full flex items-center justify-center"
+                  style={{
+                    background: "linear-gradient(135deg,rgba(124,58,237,0.2),rgba(59,130,246,0.2))",
+                    border: "1px solid rgba(124,58,237,0.4)",
+                  }}
                 >
-                  Verify & Create Account
+                  <MailCheck size={30} className="text-purple-400" />
+                </motion.div>
+
+                <div>
+                  <h2 className="text-xl font-bold text-white mb-1">Check your inbox</h2>
+                  <p className="text-sm text-slate-400">We sent a verification link to</p>
+                  <p className="text-sm font-semibold text-purple-300 mt-0.5">{emailSentTo}</p>
+                </div>
+
+                {/* Steps */}
+                <div
+                  className="w-full rounded-xl p-4 text-left space-y-3 mt-1"
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+                >
+                  {[
+                    { n: "1", text: "Open the email from us" },
+                    { n: "2", text: 'Click "Confirm your email"' },
+                    { n: "3", text: "Come back here and sign in" },
+                  ].map(({ n, text }) => (
+                    <div key={n} className="flex items-center gap-3">
+                      <div
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                        style={{ background: "linear-gradient(135deg,#7c3aed,#3b82f6)", color: "#fff" }}
+                      >
+                        {n}
+                      </div>
+                      <p className="text-sm text-slate-300">{text}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="text-xs text-slate-500">
+                  Can&apos;t find it? Check your spam folder.
+                </p>
+
+                {/* Back to Sign In */}
+                <button
+                  onClick={() => { setEmailSentTo(null); setTab("login"); }}
+                  className="flex items-center gap-2 text-sm text-purple-400 hover:text-purple-300 transition-colors font-medium mt-1"
+                >
+                  <ArrowLeft size={14} />
+                  Back to Sign In
                 </button>
 
-                {/* Resend */}
-                <p className="text-center text-xs text-text-muted">
-                  Didn&apos;t receive it?{" "}
-                  {resendCooldown > 0 ? (
-                    <span className="text-slate-500">Resend in {resendCooldown}s</span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleResend}
-                      className="text-purple-400 hover:text-purple-300 font-medium transition-colors inline-flex items-center gap-1"
-                    >
-                      <RefreshCw size={11} />
-                      Resend code
-                    </button>
-                  )}
-                </p>
-
-                {/* Back to signup */}
-                <p className="text-center text-xs text-text-muted">
-                  Wrong email?{" "}
+                {!forced && (
                   <button
-                    type="button"
-                    onClick={() => { setVerifyStep(false); setPendingUser(null); setOtp(""); setOtpInput(""); setError(""); }}
-                    className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                    onClick={onClose}
+                    className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
                   >
-                    Go back
+                    Close
                   </button>
-                </p>
+                )}
               </div>
+
             ) : (
               <>
-                {/* ── Tab switcher ────────────────────────────────────────── */}
+                {/* ── Header ───────────────────────────────────────────── */}
+                <div className="px-6 pt-6 pb-4 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold text-white">
+                      {tab === "login" ? "Welcome back" : "Create account"}
+                    </h2>
+                    {forced && (
+                      <p className="text-xs text-text-muted mt-1">
+                        Sign in or create a free account to continue
+                      </p>
+                    )}
+                  </div>
+                  {!forced && (
+                    <button
+                      onClick={onClose}
+                      className="p-2 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-colors"
+                    >
+                      <X size={18} />
+                    </button>
+                  )}
+                </div>
+
+                {/* ── Tab switcher ─────────────────────────────────────── */}
                 <div className="px-6 mb-5">
                   <div className="flex rounded-xl p-1" style={{ background: "rgba(255,255,255,0.05)" }}>
                     {(["login", "signup"] as const).map((t) => (
@@ -314,7 +208,7 @@ export default function AuthModal({ open, onClose, defaultTab = "login", forced 
                         className="flex-1 py-2 rounded-lg text-sm font-semibold transition-all"
                         style={
                           tab === t
-                            ? { background: "linear-gradient(135deg, #7c3aed, #3b82f6)", color: "#fff" }
+                            ? { background: "linear-gradient(135deg,#7c3aed,#3b82f6)", color: "#fff" }
                             : { color: "#94a3b8" }
                         }
                       >
@@ -324,7 +218,7 @@ export default function AuthModal({ open, onClose, defaultTab = "login", forced 
                   </div>
                 </div>
 
-                {/* ── Form ────────────────────────────────────────────────── */}
+                {/* ── Form ─────────────────────────────────────────────── */}
                 <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
                   {tab === "signup" && (
                     <div className="relative">
@@ -371,7 +265,14 @@ export default function AuthModal({ open, onClose, defaultTab = "login", forced 
                     </button>
                   </div>
 
-                  {error && <p className="text-red-400 text-xs px-1">{error}</p>}
+                  {error && (
+                    <div
+                      className="px-3 py-2 rounded-xl text-xs text-red-300"
+                      style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}
+                    >
+                      {error}
+                    </div>
+                  )}
 
                   <button
                     type="submit"
@@ -381,18 +282,18 @@ export default function AuthModal({ open, onClose, defaultTab = "login", forced 
                     {loading ? (
                       <span className="flex items-center justify-center gap-2">
                         <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        {tab === "login" ? "Signing in…" : "Checking details…"}
+                        {tab === "login" ? "Signing in…" : "Creating account…"}
                       </span>
                     ) : tab === "login" ? (
                       "Sign In"
                     ) : (
-                      "Continue →"
+                      "Create Account"
                     )}
                   </button>
 
                   {tab === "signup" && (
-                    <p className="text-center text-xs text-text-muted">
-                      You&apos;ll receive a verification code via email.
+                    <p className="text-center text-xs text-slate-500">
+                      A verification email will be sent to your inbox.
                     </p>
                   )}
 
