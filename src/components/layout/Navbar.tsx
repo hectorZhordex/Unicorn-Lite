@@ -67,8 +67,8 @@ export default function Navbar() {
 
           {/* Desktop Nav Links */}
           <div className="hidden lg:flex items-center gap-6">
-            <Link href="/#artworks" className="text-text-secondary hover:text-white transition-colors text-sm font-medium">Browse</Link>
-            <Link href="/#categories" className="text-text-secondary hover:text-white transition-colors text-sm font-medium">Categories</Link>
+            <Link href="/" className="text-text-secondary hover:text-white transition-colors text-sm font-medium">Home</Link>
+            <Link href="/public" className="text-text-secondary hover:text-white transition-colors text-sm font-medium">Public</Link>
             <Link href="/database" className="text-text-secondary hover:text-white transition-colors text-sm font-medium">Database</Link>
             <button onClick={() => setAboutOpen(true)} className="text-text-secondary hover:text-white transition-colors text-sm font-medium">About Us</button>
             <button onClick={() => setTermsOpen(true)} className="text-text-secondary hover:text-white transition-colors text-sm font-medium">Terms</button>
@@ -158,7 +158,7 @@ export default function Navbar() {
               style={{ background: "rgb(8,8,20)" }}
             >
               <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-1">
-                {[["Browse", "/#artworks"], ["Categories", "/#categories"]].map(([label, href]) => (
+                {[["Home", "/"], ["Public", "/public"], ["Database", "/database"]].map(([label, href]) => (
                   <Link key={label} href={href} onClick={() => setMobileOpen(false)}
                     className="px-4 py-3 rounded-xl text-text-secondary hover:text-white hover:bg-white/5 transition-colors font-medium text-sm">
                     {label}
