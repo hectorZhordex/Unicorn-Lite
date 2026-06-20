@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import AuthModal from "@/components/layout/AuthModal";
+import { useAuthStore } from "@/lib/auth-store";
 import {
   CheckCircle2, Database, Shield, Zap, Globe,
   ArrowLeft, Server, HardDrive, Star
@@ -96,6 +99,34 @@ const COMPARISON = [
 
 export default function DatabasePage() {
   const [selected, setSelected] = useState<string | null>(null);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [pendingPlan, setPendingPlan] = useState<{ name: string; price: number } | null>(null);
+  const router = useRouter();
+  const { currentUser } = useAuthStore();
+
+  // After login, redirect to payment if a plan was pending
+  const [redirectDone, setRedirectDone] = useState(false);
+  // Import useEffect
+  if (typeof window !== "undefined" && currentUser && pendingPlan && authOpen === false && !redirectDone) {
+    setRedirectDone(true);
+    router.push(`/payment?plan=${encodeURIComponent(pendingPlan.name)}&price=${pendingPlan.price}`);
+  }
+
+  const handleChoosePlan = (plan: typeof PLANS[0]) => {
+    if (!currentUser) {
+      setPendingPlan({ name: plan.name, price: plan.price });
+      setAuthOpen(true);
+    } else {
+      router.push(`/payment?plan=${encodeURIComponent(plan.name)}&price=${plan.price}`);
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    setAuthOpen(false);
+    if (pendingPlan) {
+      router.push(`/payment?plan=${encodeURIComponent(pendingPlan.name)}&price=${pendingPlan.price}`);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -182,7 +213,7 @@ export default function DatabasePage() {
                 </ul>
 
                 <button
-                  onClick={() => setSelected(plan.name)}
+                  onClick={() => handleChoosePlan(plan)}
                   className="w-full py-3.5 rounded-xl text-sm font-bold text-white transition-all active:scale-95"
                   style={{
                     background: plan.highlight
@@ -192,7 +223,7 @@ export default function DatabasePage() {
                     boxShadow: plan.highlight ? "0 4px 20px rgba(59,130,246,0.3)" : "none",
                   }}
                 >
-                  {selected === plan.name ? "Selected" : "Choose Plan"}
+                  Choose Plan
                 </button>
               </motion.div>
             ))}
@@ -282,6 +313,12 @@ export default function DatabasePage() {
       </main>
 
       <Footer />
+
+      <AuthModal
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        defaultTab="signup"
+      />
     </div>
   );
 }
