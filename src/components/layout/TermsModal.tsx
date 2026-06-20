@@ -12,57 +12,101 @@ interface Props {
 const SECTIONS = [
   {
     title: "1. Acceptance of Terms",
-    body: "By using our services, website, cloud storage platform, or related products, you agree to comply with these Terms and Conditions and all applicable laws and regulations.",
+    body: "By accessing or using BlueOrbit Technologies' platform, website, cloud storage services, file hosting features, or creator monetization system, you agree to be bound by these Terms and Conditions and all applicable laws and regulations. If you do not agree to these terms, you may not use our services.",
   },
   {
-    title: "2. User Accounts",
-    body: "Users may be required to create an account to access certain features of our services. You are responsible for maintaining the security of your account credentials and all activity that occurs under your account.",
+    title: "2. Eligibility and Account Registration",
+    body: "You must be at least 13 years of age to use BlueOrbit. By creating an account, you represent that all information provided is accurate and current. You are responsible for maintaining the security of your account credentials and for all activity that occurs under your account. BlueOrbit is not liable for any loss or damage resulting from unauthorized access to your account.",
   },
   {
-    title: "3. Public and Private Storage",
-    body: "BlueOrbit offers both public and private cloud services.",
+    title: "3. Acceptable Use",
+    body: "You agree to use BlueOrbit only for lawful purposes and in a manner consistent with these Terms. You may not use our platform to:",
+    items: [
+      "Upload, store, or distribute content that violates any applicable local, national, or international law or regulation.",
+      "Upload or share copyrighted material without explicit authorization from the rights holder.",
+      "Distribute malware, viruses, ransomware, spyware, or any other harmful or malicious code.",
+      "Engage in fraud, phishing, scams, or deceptive practices of any kind.",
+      "Upload content that is defamatory, obscene, or violates the privacy or rights of any third party.",
+      "Attempt to gain unauthorized access to BlueOrbit systems, infrastructure, or other user accounts.",
+      "Use automated bots, scripts, or tools to generate artificial traffic or inflate download or verification statistics.",
+    ],
+  },
+  {
+    title: "4. Content Ownership and License",
+    body: "You retain full ownership of all content you upload to BlueOrbit. By uploading content, you grant BlueOrbit a limited, non-exclusive, royalty-free license to store, process, display, and distribute your content as necessary to operate and provide our services. For publicly shared content, you grant BlueOrbit the right to make such content accessible to other users and visitors through platform features and shared links.",
+  },
+  {
+    title: "5. Public File Sharing",
+    body: "Files designated as public or shared via public links may be accessible to any user or visitor on or off the BlueOrbit platform. By sharing content publicly, you acknowledge and accept that:",
+    items: [
+      "Your files may be viewed, accessed, or downloaded by third parties.",
+      "Your files may appear in platform discovery features.",
+      "BlueOrbit does not guarantee the privacy or confidentiality of publicly shared content.",
+      "You are solely responsible for determining whether your content is appropriate for public sharing.",
+    ],
+  },
+  {
+    title: "6. Creator Monetization System",
+    body: "BlueOrbit provides a creator monetization system that allows eligible users to earn revenue when visitors access or unlock their publicly shared content through our supported verification and advertising mechanisms.",
     sub: [
       {
-        label: "Public Storage (Free Users)",
-        text: "Files uploaded without an active paid storage plan may be stored in public storage areas. By uploading files without a paid plan, you acknowledge and agree that: Uploaded content may be publicly accessible. Uploaded content may appear in public search results within the BlueOrbit platform. Other users may view, access, and download publicly available files. BlueOrbit does not guarantee privacy for content uploaded to public storage. Users should not upload confidential, sensitive, personal, or proprietary information to public storage.",
+        label: "Eligibility",
+        text: "To participate in the monetization program, users must comply with all platform policies, maintain an account in good standing, and meet any minimum traffic or engagement thresholds established by BlueOrbit.",
       },
       {
-        label: "Private Storage (Paid Plans)",
-        text: "Users with eligible paid plans may access private storage features. Content stored in designated private storage areas is intended to be accessible only to authorized users, subject to the security features provided by the platform.",
+        label: "Earnings Calculation",
+        text: "Earnings are calculated based on verified visitor interactions with your content. BlueOrbit reserves the right to adjust, withhold, or remove earnings in cases of invalid traffic, fraudulent activity, automated or bot-generated interactions, policy violations, or any form of abuse of the monetization system.",
+      },
+      {
+        label: "Payouts",
+        text: "Payouts are processed according to the minimum thresholds and payment schedules defined by BlueOrbit. We reserve the right to delay or withhold payouts pending fraud investigation or policy review. BlueOrbit is not liable for losses arising from delayed or withheld earnings due to policy violations or fraudulent activity.",
+      },
+      {
+        label: "Program Changes",
+        text: "BlueOrbit reserves the right to modify, suspend, or terminate the creator monetization program at any time. Participation in the program does not constitute a guaranteed income or employment relationship.",
       },
     ],
   },
   {
-    title: "4. Prohibited Content",
-    body: "Users may not upload, store, distribute, or share content that violates any applicable law, infringes copyrights, trademarks, or other intellectual property rights, contains malware, viruses, or harmful code, promotes fraud or illegal activities, or violates the privacy rights of others. BlueOrbit reserves the right to remove content that violates these terms.",
+    title: "7. Prohibited Content",
+    body: "The following types of content are strictly prohibited on BlueOrbit:",
+    items: [
+      "Content that infringes any intellectual property rights, including copyright, trademark, or trade secrets.",
+      "Illegal content of any kind, including content that promotes or facilitates criminal activity.",
+      "Adult, explicit, or sexually explicit content unless otherwise expressly permitted by BlueOrbit in writing.",
+      "Content containing malware, viruses, or any software designed to damage or gain unauthorized access to systems.",
+      "Content that promotes hate, discrimination, or violence against individuals or groups.",
+      "Spam, deceptive links, or misleading content designed to manipulate users.",
+    ],
+    footer: "BlueOrbit reserves the right to remove any content that violates these prohibitions without prior notice.",
   },
   {
-    title: "5. Content Ownership",
-    body: "Users retain ownership of content they upload. By uploading content, you grant BlueOrbit a limited license to store, process, display, and distribute the content as necessary to provide the service. For publicly stored content, users grant BlueOrbit permission to display and make such content available through public areas of the platform.",
+    title: "8. Account Suspension and Termination",
+    body: "BlueOrbit reserves the right to suspend, restrict, or permanently terminate any account that violates these Terms and Conditions, engages in fraudulent or abusive behavior, generates invalid traffic, or poses a risk to the security or integrity of our platform or other users. Upon termination, access to your account and stored files will be removed. Earnings associated with terminated accounts may be forfeited in cases of policy violations.",
   },
   {
-    title: "6. Service Availability",
-    body: "While we strive to maintain uninterrupted service, BlueOrbit does not guarantee continuous availability and may perform maintenance, upgrades, or modifications without prior notice.",
+    title: "9. Limitation of Liability",
+    body: "To the maximum extent permitted by applicable law, BlueOrbit Technologies shall not be liable for any indirect, incidental, consequential, special, or punitive damages arising from your use of or inability to use our services. This includes, but is not limited to, loss of data, loss of earnings, or service interruptions. You are solely responsible for maintaining backups of any important content stored on the platform.",
   },
   {
-    title: "7. Limitation of Liability",
-    body: "BlueOrbit Technologies shall not be liable for any indirect, incidental, consequential, or special damages arising from the use of or inability to use our services. Users are solely responsible for maintaining backups of important data.",
+    title: "10. Service Availability",
+    body: "BlueOrbit strives to maintain continuous and reliable service availability. However, we do not guarantee uninterrupted access and may perform scheduled or emergency maintenance, upgrades, or modifications without prior notice. BlueOrbit is not liable for any loss or inconvenience arising from temporary service unavailability.",
   },
   {
-    title: "8. Account Suspension",
-    body: "We reserve the right to suspend or terminate accounts that violate these Terms and Conditions or engage in activities that may harm the platform, users, or our services.",
+    title: "11. Intellectual Property",
+    body: "All platform software, design elements, trademarks, logos, and proprietary technology associated with BlueOrbit Technologies are the exclusive property of BlueOrbit and are protected by applicable intellectual property laws. You may not reproduce, copy, or use any BlueOrbit intellectual property without express written permission.",
   },
   {
-    title: "9. Changes to Terms",
-    body: "BlueOrbit may modify these Terms and Conditions at any time. Continued use of the service after changes are posted constitutes acceptance of the updated Terms.",
+    title: "12. Changes to Terms",
+    body: "BlueOrbit may modify these Terms and Conditions at any time. Updated terms will be posted on this page with a revised effective date. Your continued use of the platform after changes are posted constitutes your acceptance of the updated Terms and Conditions.",
   },
   {
-    title: "10. Governing Law",
-    body: "These Terms and Conditions shall be governed by and construed in accordance with the laws of the United States, without regard to conflict of law principles.",
+    title: "13. Governing Law",
+    body: "These Terms and Conditions are governed by and construed in accordance with the laws of the United States, without regard to its conflict of law provisions. Any disputes arising under these Terms shall be subject to the exclusive jurisdiction of the courts located in the United States.",
   },
   {
-    title: "11. Contact Information",
-    body: "For questions regarding these Terms and Conditions, please contact BlueOrbit Technologies through the contact methods provided on our website.",
+    title: "14. Contact Information",
+    body: "For questions, concerns, or legal inquiries regarding these Terms and Conditions, please contact BlueOrbit Technologies through the official support channels provided on our website.",
   },
 ];
 
@@ -116,22 +160,35 @@ export default function TermsModal({ open, onClose }: Props) {
               style={{ scrollbarWidth: "thin", scrollbarColor: "#2a2a55 transparent" }}>
 
               <p className="text-text-muted">
-                By accessing or using BlueOrbit Technologies ("BlueOrbit," "we," "our," or "us"), you agree to be bound by these Terms and Conditions.
+                These Terms and Conditions govern your use of BlueOrbit Technologies' cloud storage, file hosting, content sharing, and creator monetization platform. Please read them carefully before using our services.
               </p>
 
               {SECTIONS.map((s) => (
                 <div key={s.title}>
                   <h3 className="text-sm font-semibold text-white mb-1.5">{s.title}</h3>
-                  <p className="text-text-secondary">{s.body}</p>
+                  <p className="text-text-secondary mb-2">{s.body}</p>
+                  {"items" in s && s.items && (
+                    <ul className="space-y-1.5 pl-3 mb-2">
+                      {s.items.map((item) => (
+                        <li key={item} className="flex items-start gap-2 text-text-muted">
+                          <span className="w-1 h-1 rounded-full bg-purple-400 mt-2 flex-shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   {"sub" in s && s.sub && (
-                    <div className="mt-3 space-y-3">
+                    <div className="mt-2 space-y-3">
                       {s.sub.map((sub) => (
                         <div key={sub.label} className="pl-4 border-l border-white/10">
                           <p className="text-xs font-semibold text-text-primary mb-1 uppercase tracking-wide">{sub.label}</p>
-                          <p className="text-text-muted text-sm">{sub.text}</p>
+                          <p className="text-text-muted">{sub.text}</p>
                         </div>
                       ))}
                     </div>
+                  )}
+                  {"footer" in s && s.footer && (
+                    <p className="text-text-muted text-sm mt-2 italic">{s.footer}</p>
                   )}
                 </div>
               ))}
