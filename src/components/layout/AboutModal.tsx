@@ -52,28 +52,36 @@ export default function AboutModal({ open, onClose }: Props) {
               </button>
             </div>
 
-            <div className="overflow-y-auto flex-1 px-6 py-6 space-y-4 text-sm text-text-secondary leading-relaxed"
+            <div className="overflow-y-auto flex-1 px-6 py-6 space-y-5 text-sm text-text-secondary leading-relaxed"
               style={{ scrollbarWidth: "thin", scrollbarColor: "#2a2a55 transparent" }}>
 
-              <p className="text-white font-semibold text-base">Welcome to BlueOrbit Technologies.</p>
+              <p className="text-white font-semibold text-base">Welcome to BlueOrbit Technologies</p>
 
               <p>
-                BlueOrbit Technologies is a U.S.-based technology company focused on delivering reliable, secure, and scalable cloud solutions for individuals, creators, and businesses worldwide. Our mission is to make cloud services accessible, affordable, and easy to use while maintaining high standards of performance and security.
+                BlueOrbit Technologies is a U.S.-based cloud storage, file hosting, and digital content distribution platform built for individuals, creators, and businesses worldwide. We provide secure, scalable, and high-performance cloud infrastructure that enables users to upload, store, organize, and share digital files from anywhere in the world.
               </p>
 
               <p>
-                We provide a range of services including public cloud storage, private cloud solutions, file hosting, data management, and cloud infrastructure designed to help users store, access, and share their digital content from anywhere in the world.
+                Our platform is designed to make cloud storage accessible, fast, and reliable. Whether you are an individual looking for a secure place to store your files, a creator distributing digital content to a global audience, or a business requiring dependable cloud infrastructure, BlueOrbit is built to meet your needs.
               </p>
 
               <p>
-                At BlueOrbit, we believe technology should empower people. Whether you need simple file storage, enterprise-grade cloud infrastructure, or secure data management solutions, our platform is built to support your needs with speed, reliability, and transparency.
+                BlueOrbit supports both public and private file hosting. Public files can be shared through unique links and discovered by other users on the platform. Private files remain restricted to the account holder, protected by our secure cloud infrastructure and access controls.
               </p>
 
               <p>
-                Our commitment is to continuously improve our services, maintain a secure environment, and provide dependable cloud solutions for our growing global community.
+                One of the core features of BlueOrbit is our creator monetization system. Creators who upload and share content publicly can earn revenue when visitors access or unlock their files through our platform's supported advertising and verification mechanisms. Our reward system is designed to fairly compensate content creators for the traffic and engagement their uploads generate.
               </p>
 
-              <div className="pt-2">
+              <p>
+                We are committed to maintaining a secure, transparent, and trustworthy environment for all users. Our infrastructure is built on modern cloud technologies designed for high availability, data integrity, and performance. We continuously invest in improving our platform, expanding our services, and supporting our growing global community of creators and users.
+              </p>
+
+              <p>
+                BlueOrbit Technologies operates under U.S. law and maintains compliance with applicable regulations governing cloud services, data privacy, and digital content distribution.
+              </p>
+
+              <div className="pt-2 border-t border-white/5">
                 <p className="text-white font-semibold">BlueOrbit Technologies</p>
                 <p className="text-text-muted">Powering Your Digital Universe.</p>
               </div>
