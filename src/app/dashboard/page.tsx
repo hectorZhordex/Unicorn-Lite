@@ -92,10 +92,11 @@ export default function DashboardPage() {
   const totalDownloads = userFiles.reduce((s, f) => s + (f.downloads || 0), 0);
   const totalViews = userFiles.reduce((s, f) => s + (f.views || 0), 0);
 
+  // ✅ CHANGED: "Upload" → "Upload Link"
   const NAV: { id: DashTab; icon: typeof LayoutDashboard; label: string }[] = [
     { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { id: "files", icon: Files, label: "Files" },
-    { id: "upload", icon: Upload, label: "Upload" },
+    { id: "upload", icon: Upload, label: "Upload Link" },
     { id: "database", icon: Database, label: "Database" },
     { id: "shared", icon: Share2, label: "Shared Files" },
     { id: "earnings", icon: DollarSign, label: "Earnings" },
@@ -387,7 +388,6 @@ function FilesTab({ files, onUpload }: { files: Artwork[]; onUpload: () => void 
       ) : (
         <div className="rounded-2xl overflow-hidden"
           style={{ background: "rgba(13,13,26,0.9)", border: "1px solid rgba(255,255,255,0.06)" }}>
-          {/* Header */}
           <div className="px-4 py-3 border-b border-white/5 hidden sm:grid sm:grid-cols-12 text-xs text-slate-600 font-medium">
             <span className="col-span-5">File Name</span>
             <span className="col-span-2 text-center">Size</span>
@@ -397,7 +397,6 @@ function FilesTab({ files, onUpload }: { files: Artwork[]; onUpload: () => void 
           </div>
           {files.map((f) => (
             <div key={f.id} className="p-3 sm:p-4 border-b border-white/5 last:border-0 hover:bg-white/2 transition-colors">
-              {/* Mobile view */}
               <div className="sm:hidden flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
                   style={{ background: "rgba(124,58,237,0.15)", color: "#a78bfa" }}>
@@ -410,7 +409,6 @@ function FilesTab({ files, onUpload }: { files: Artwork[]; onUpload: () => void 
                 <span className="text-xs px-2 py-0.5 rounded-full text-green-400 flex-shrink-0"
                   style={{ background: "rgba(16,185,129,0.12)" }}>Public</span>
               </div>
-              {/* Desktop view */}
               <div className="hidden sm:grid sm:grid-cols-12 items-center text-sm">
                 <div className="col-span-5 flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
