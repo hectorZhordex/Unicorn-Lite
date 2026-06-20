@@ -79,14 +79,14 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-2 flex-shrink-0">
             {currentUser ? (
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setUploadOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all"
-                  style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", color: "#34d399" }}
+                <a
+                  href="/dashboard"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all"
+                  style={{ background: "linear-gradient(135deg,#7c3aed,#3b82f6)", boxShadow: "0 4px 14px rgba(124,58,237,0.35)" }}
                 >
-                  <Upload size={14} />
-                  Upload
-                </button>
+                  <LayoutDashboard size={15} />
+                  Dashboard
+                </a>
                 <div className="relative">
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
