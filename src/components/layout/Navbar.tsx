@@ -79,14 +79,15 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-2 flex-shrink-0">
             {currentUser ? (
               <div className="flex items-center gap-2">
-                <a
-                  href="/dashboard"
+                {/* Dashboard button — uses router push for reliability */}
+                <button
+                  onClick={() => { window.location.href = "/dashboard"; }}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all"
                   style={{ background: "linear-gradient(135deg,#7c3aed,#3b82f6)", boxShadow: "0 4px 14px rgba(124,58,237,0.35)" }}
                 >
                   <LayoutDashboard size={15} />
                   Dashboard
-                </a>
+                </button>
                 <div className="relative">
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -176,6 +177,13 @@ export default function Navbar() {
                 <div className="border-t border-white/5 pt-3 mt-1 flex flex-col gap-2">
                   {currentUser ? (
                     <div className="flex flex-col gap-2">
+                      <button
+                        onClick={() => { setMobileOpen(false); window.location.href = "/dashboard"; }}
+                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-white transition-all w-full"
+                        style={{ background: "linear-gradient(135deg,#7c3aed,#3b82f6)" }}
+                      >
+                        <LayoutDashboard size={15} />Dashboard
+                      </button>
                       <button
                         onClick={() => { setUploadOpen(true); setMobileOpen(false); }}
                         className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all"
