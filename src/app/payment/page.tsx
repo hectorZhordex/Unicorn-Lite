@@ -210,16 +210,16 @@ function PaymentContent() {
                   <AlertCircle size={30} className="text-red-400" />
                 </div>
 
-                <h2 className="text-xl font-bold text-white mb-3">Verification Required</h2>
+                <h2 className="text-xl font-bold text-white mb-3">Account Verification Required</h2>
 
                 <p className="text-slate-400 text-sm leading-relaxed mb-3">
-                  Your payment was received, but your account requires verification before a database plan can be activated.
+                  We are unable to process payments from unverified accounts. No charge has been made.
                 </p>
 
                 <div className="p-4 rounded-xl text-left mb-5"
                   style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)" }}>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    To protect our platform and ensure compliance, all database plan subscribers must complete account verification. Please contact our support team through the official BlueOrbit support channels to complete your verification and activate your plan.
+                    To protect our platform and our customers, BlueOrbit requires all accounts to be verified before purchasing a database plan. Please contact our support team through official BlueOrbit support channels to complete your account verification. Once verified, you will be able to proceed with your purchase.
                   </p>
                 </div>
 
