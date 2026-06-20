@@ -13,6 +13,7 @@ import UserUploadModal from "@/components/upload/UserUploadModal";
 import { type Artwork } from "@/types";
 import { ChevronDown, TrendingUp, Sparkles, Upload, ArrowRight, RefreshCw } from "lucide-react";
 import AnnouncementModal from "@/components/layout/AnnouncementModal";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
 
 const GUEST_TIMEOUT = 60;
@@ -31,7 +32,13 @@ function HomeContent() {
   const [authOpen, setAuthOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const router = useRouter();
   const { currentUser } = useAuthStore();
+
+  // Redirect logged-in users to dashboard
+  useEffect(() => {
+    if (currentUser) router.push("/dashboard");
+  }, [currentUser, router]);
 
   // Fetch artworks from Supabase via API
   const fetchArtworks = useCallback(async (cat: string, q: string, reset = false) => {
