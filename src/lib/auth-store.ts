@@ -15,12 +15,14 @@ interface AuthStore {
   currentUser: User | null;
   users: User[];
   login: (email: string, password: string) => { success: boolean; error?: string };
+  // ✅ NEW: validate only — does NOT create the user (used before OTP step)
+  validateNewUser: (name: string, email: string, password: string) => { success: boolean; error?: string };
+  // register now creates + logs in the user (called after OTP is verified)
   register: (name: string, email: string, password: string) => { success: boolean; error?: string };
   logout: () => void;
   addUpload: (artworkId: string) => void;
 }
 
-// Passwords stored separately (not in User object)
 interface PasswordStore {
   [email: string]: string;
 }
@@ -37,15 +39,33 @@ export const useAuthStore = create<AuthStore>()(
         );
         const user = get().users.find((u) => u.email.toLowerCase() === email.toLowerCase());
         if (!user) return { success: false, error: "No account found with this email." };
-        if (passwords[email.toLowerCase()] !== password) return { success: false, error: "Incorrect password." };
+        if (passwords[email.toLowerCase()] !== password)
+          return { success: false, error: "Incorrect password." };
         set({ currentUser: user });
         return { success: true };
       },
 
+      // ✅ NEW: checks duplicate email + password strength, returns error without saving anything
+      validateNewUser: (name, email, password) => {
+        if (!name.trim()) return { success: false, error: "Please enter your name." };
+        const existing = get().users.find(
+          (u) => u.email.toLowerCase() === email.toLowerCase()
+        );
+        if (existing)
+          return { success: false, error: "An account with this email already exists." };
+        if (password.length < 6)
+          return { success: false, error: "Password must be at least 6 characters." };
+        return { success: true };
+      },
+
       register: (name, email, password) => {
-        const existing = get().users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-        if (existing) return { success: false, error: "An account with this email already exists." };
-        if (password.length < 6) return { success: false, error: "Password must be at least 6 characters." };
+        const existing = get().users.find(
+          (u) => u.email.toLowerCase() === email.toLowerCase()
+        );
+        if (existing)
+          return { success: false, error: "An account with this email already exists." };
+        if (password.length < 6)
+          return { success: false, error: "Password must be at least 6 characters." };
 
         const newUser: User = {
           id: Math.random().toString(36).substring(2) + Date.now().toString(36),
@@ -70,7 +90,10 @@ export const useAuthStore = create<AuthStore>()(
       addUpload: (artworkId) => {
         set((state) => {
           if (!state.currentUser) return state;
-          const updated = { ...state.currentUser, uploads: [...state.currentUser.uploads, artworkId] };
+          const updated = {
+            ...state.currentUser,
+            uploads: [...state.currentUser.uploads, artworkId],
+          };
           return {
             currentUser: updated,
             users: state.users.map((u) => (u.id === updated.id ? updated : u)),
