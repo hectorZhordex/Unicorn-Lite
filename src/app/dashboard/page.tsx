@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  LayoutDashboard, Files, Upload, Database, Share2,
+  LayoutDashboard, Files, Upload, Database, Share2, Home,
   DollarSign, BarChart3, CreditCard, Settings, Globe,
   LogOut, Search, Bell, ChevronDown, Menu, X,
   TrendingUp, Eye, Download, HardDrive,
@@ -17,6 +17,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { useSettingsStore } from "@/lib/settings-store";
 import { formatNumber } from "@/lib/utils";
 import UserUploadModal from "@/components/upload/UserUploadModal";
+import { useUploadsStore } from "@/lib/uploads-store";
 
 type DashTab = "dashboard" | "files" | "upload" | "database" | "shared" | "earnings" | "analytics" | "payouts" | "settings";
 
@@ -148,6 +149,12 @@ export default function DashboardPage() {
 
       {/* Nav */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        {/* Home link */}
+        <a href="/"
+          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-white/5">
+          <Home size={17} />
+          Home
+        </a>
         {NAV.map(({ id, icon: Icon, label }) => (
           <button
             key={id}
@@ -294,11 +301,18 @@ export default function DashboardPage() {
 
 /* ─────────────── DASHBOARD HOME ─────────────── */
 function DashboardHome({ user, onUpload }: { user: any; onUpload: () => void }) {
+  const { uploads } = useUploadsStore();
+  const userFiles = uploads; // real uploads from this user
+
+  const totalFiles = userFiles.length;
+  const totalDownloads = userFiles.reduce((s, f) => s + (f.downloads || 0), 0);
+  const totalViews = userFiles.reduce((s, f) => s + (f.views || 0), 0);
+
   const STATS = [
-    { icon: Files, label: "Total Files", value: "1,248", sub: "+12 this week", color: "#7c3aed" },
-    { icon: Download, label: "Total Downloads", value: "3,654", sub: "+256 this week", color: "#3b82f6" },
-    { icon: Eye, label: "Total Views", value: "18,392", sub: "+1,024 this week", color: "#10b981" },
-    { icon: DollarSign, label: "Total Earnings", value: "$1,248.75", sub: "+$96.50 this week", color: "#f59e0b" },
+    { icon: Files, label: "Total Files", value: totalFiles.toLocaleString(), sub: totalFiles === 0 ? "Upload your first file" : `${totalFiles} file${totalFiles !== 1 ? "s" : ""} uploaded`, color: "#7c3aed" },
+    { icon: Download, label: "Total Downloads", value: totalDownloads.toLocaleString(), sub: totalDownloads === 0 ? "No downloads yet" : `${totalDownloads} total downloads`, color: "#3b82f6" },
+    { icon: Eye, label: "Total Views", value: totalViews.toLocaleString(), sub: totalViews === 0 ? "No views yet" : `${totalViews} total views`, color: "#10b981" },
+    { icon: DollarSign, label: "Total Earnings", value: "$0.00", sub: "Monetization activates at 500 views", color: "#f59e0b" },
   ];
 
   return (
@@ -340,20 +354,25 @@ function DashboardHome({ user, onUpload }: { user: any; onUpload: () => void }) 
             <button className="text-xs text-purple-400 hover:text-purple-300 transition-colors">View all</button>
           </div>
           <div className="space-y-2.5">
-            {RECENT_FILES.slice(0, 4).map((f) => (
-              <div key={f.name} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/3 transition-colors">
+            {userFiles.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-slate-500 text-sm">No files yet.</p>
+                <button onClick={onUpload} className="mt-2 text-purple-400 text-xs hover:text-purple-300 transition-colors">Upload your first file</button>
+              </div>
+            ) : userFiles.slice(0, 4).map((f) => (
+              <div key={f.id} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/3 transition-colors">
                 <div className="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
                   style={{ background: "rgba(124,58,237,0.15)", color: "#a78bfa" }}>
-                  {f.type.slice(0, 3)}
+                  {(f.file_format || "FILE").slice(0, 3)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">{f.name}</p>
-                  <p className="text-xs text-slate-500">{f.size} · {f.uploaded}</p>
+                  <p className="text-sm font-medium text-white truncate">{f.title}</p>
+                  <p className="text-xs text-slate-500">{f.file_size || "N/A"} · {new Date(f.created_at).toLocaleDateString()}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${f.visibility === "Public" ? "text-green-400" : "text-slate-500"}`}
-                    style={{ background: f.visibility === "Public" ? "rgba(16,185,129,0.12)" : "rgba(255,255,255,0.05)" }}>
-                    {f.visibility}
+                  <span className="text-xs px-2 py-0.5 rounded-full text-green-400"
+                    style={{ background: "rgba(16,185,129,0.12)" }}>
+                    Public
                   </span>
                 </div>
               </div>
