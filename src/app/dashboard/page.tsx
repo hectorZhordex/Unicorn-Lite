@@ -84,7 +84,7 @@ export default function DashboardPage() {
 
   if (!currentUser) return null;
 
-  const handleLogout = () => { logout(); router.push("/"); };
+  const handleLogout = async () => { await logout(); router.push("/"); };
 
   // Real data from user's uploads
   const userFiles: Artwork[] = uploads;
@@ -649,6 +649,4 @@ function SettingsTab({ user }: { user: any }) {
         </div>
         <button className="btn-primary py-2.5 px-6 text-sm">Save Changes</button>
       </div>
-    </div>
-  );
-}
+    </
