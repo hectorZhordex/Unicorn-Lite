@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Layers, Menu, X, LogOut, ChevronDown, Upload } from "lucide-react";
+import { Layers, Menu, X, LogOut, ChevronDown, Upload, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/lib/settings-store";
 import { useAuthStore } from "@/lib/auth-store";
