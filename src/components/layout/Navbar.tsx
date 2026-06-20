@@ -69,6 +69,7 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center gap-6">
             <Link href="/#artworks" className="text-text-secondary hover:text-white transition-colors text-sm font-medium">Browse</Link>
             <Link href="/#categories" className="text-text-secondary hover:text-white transition-colors text-sm font-medium">Categories</Link>
+            <Link href="/database" className="text-text-secondary hover:text-white transition-colors text-sm font-medium">Database</Link>
             <button onClick={() => setAboutOpen(true)} className="text-text-secondary hover:text-white transition-colors text-sm font-medium">About Us</button>
             <button onClick={() => setTermsOpen(true)} className="text-text-secondary hover:text-white transition-colors text-sm font-medium">Terms</button>
             <button onClick={() => setPrivacyOpen(true)} className="text-text-secondary hover:text-white transition-colors text-sm font-medium">Privacy Policy</button>
