@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Layers, Menu, X, LogOut, ChevronDown, Upload, LayoutDashboard, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/lib/settings-store";

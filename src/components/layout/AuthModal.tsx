@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { X, Eye, EyeOff, User, Mail, Lock, ShieldCheck } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
 import toast from "react-hot-toast";
