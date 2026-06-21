@@ -45,13 +45,13 @@ export default function AuthModal({ open, onClose, defaultTab = "login", forced 
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  const handleVerifyOtp = () => {
+  const handleVerifyOtp = async () => {
     if (otpInput.trim() !== generatedOtp) {
       setError("Invalid verification code. Please check your email.");
       return;
     }
     // Re-login the verified user (they were registered above but logged out pending verify)
-    const res = useAuthStore.getState().login(pendingReg!.email, pendingReg!.password);
+    const res = await useAuthStore.getState().login(pendingReg!.email, pendingReg!.password);
     if (res.success) {
       toast.success("Email verified! Welcome aboard 🎉");
       onClose();
