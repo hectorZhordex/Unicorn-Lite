@@ -67,7 +67,7 @@ export default function AuthModal({ open, onClose, defaultTab = "login", forced 
     await new Promise((r) => setTimeout(r, 400));
 
     if (tab === "login") {
-      const res = login(form.email, form.password);
+      const res = await login(form.email, form.password);
       if (res.success) {
         toast.success("Welcome back!");
         onClose();
@@ -77,7 +77,7 @@ export default function AuthModal({ open, onClose, defaultTab = "login", forced 
     } else {
       if (!form.name.trim()) { setError("Please enter your name."); setLoading(false); return; }
       // Check if email already exists before sending OTP
-      const checkRes = register(form.name, form.email, form.password);
+      const checkRes = await register(form.name, form.email, form.password);
       if (!checkRes.success) { setError(checkRes.error || "Registration failed."); setLoading(false); return; }
       // Immediately log out the just-registered user so they must verify first
       const { logout } = useAuthStore.getState();
