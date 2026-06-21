@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, LogOut, ChevronDown, Upload, LayoutDashboard, Settings } from "lucide-react";
+import { Layers, Menu, X, LogOut, ChevronDown, Upload, LayoutDashboard, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/lib/settings-store";
 import { useAuthStore } from "@/lib/auth-store";
@@ -24,31 +24,27 @@ export default function Navbar() {
   const [authTab, setAuthTab] = useState<"login" | "signup">("login");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
-
-  // ✅ FIX: ref to detect clicks outside the user dropdown
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const { settings } = useSettingsStore();
   const { currentUser, logout } = useAuthStore();
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // ✅ FIX: close dropdown when clicking anywhere outside it
+  // Close user menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
       }
     };
-    if (userMenuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
+    if (userMenuOpen) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [userMenuOpen]);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const openAuth = (tab: "login" | "signup") => {
     setAuthTab(tab);
@@ -66,7 +62,7 @@ export default function Navbar() {
         style={scrolled ? { background: "rgb(8,8,20)" } : {}}
       >
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-4">
-          {/* Logo */}
+          {/* Logo — /favicon.png works on all devices */}
           <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
             <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
               <Image
@@ -94,89 +90,70 @@ export default function Navbar() {
           {/* Right — Auth */}
           <div className="hidden md:flex items-center gap-2 flex-shrink-0">
             {currentUser ? (
-              // ✅ FIX: Single dropdown with Dashboard + Upload Link + Sign Out
-              // No separate "Dashboard" button that caused double-navigation confusion
-              <div className="relative" ref={userMenuRef}>
-                <button
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all text-white"
-                  style={{ background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)" }}
-                >
-                  <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                    style={{ background: "linear-gradient(135deg,#7c3aed,#3b82f6)" }}
+              <div className="flex items-center gap-2" ref={userMenuRef}>
+                <div className="relative">
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all text-white"
+                    style={{ background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)" }}
                   >
-                    {currentUser.name.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="max-w-[100px] truncate">{currentUser.name}</span>
-                  <ChevronDown size={14} className={cn("transition-transform duration-200", userMenuOpen && "rotate-180")} />
-                </button>
-
-                <AnimatePresence>
-                  {userMenuOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 4, scale: 0.95 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute right-0 top-full mt-2 w-52 rounded-xl overflow-hidden z-50"
-                      style={{
-                        background: "rgba(13,13,26,0.98)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
-                      }}
-                    >
-                      {/* User info */}
-                      <div className="px-4 py-3 border-b border-white/5">
-                        <p className="text-xs font-semibold text-white truncate">{currentUser.name}</p>
-                        <p className="text-xs text-text-muted truncate">{currentUser.email}</p>
-                      </div>
-
-                      {/* Dashboard */}
-                      <button
-                        onClick={() => { setUserMenuOpen(false); window.location.href = "/dashboard"; }}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                      style={{ background: "linear-gradient(135deg,#7c3aed,#3b82f6)" }}>
+                      {currentUser.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="max-w-[100px] truncate">{currentUser.name}</span>
+                    <ChevronDown size={14} />
+                  </button>
+                  <AnimatePresence>
+                    {userMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 4, scale: 0.95 }}
+                        className="absolute right-0 top-full mt-2 w-52 rounded-xl overflow-hidden z-50"
+                        style={{ background: "rgba(13,13,26,0.98)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 8px 32px rgba(0,0,0,0.6)" }}
                       >
-                        <LayoutDashboard size={14} className="text-purple-400" />
-                        Dashboard
-                      </button>
-
-                      {/* Upload Link */}
-                      <button
-                        onClick={() => { setUserMenuOpen(false); setUploadOpen(true); }}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-                      >
-                        <Upload size={14} className="text-emerald-400" />
-                        Upload Link
-                      </button>
-
-                      {/* Divider + Sign Out */}
-                      <div className="border-t border-white/5">
+                        <div className="px-4 py-3 border-b border-white/5">
+                          <p className="text-xs font-medium text-white truncate">{currentUser.name}</p>
+                          <p className="text-xs text-text-muted truncate">{currentUser.email}</p>
+                        </div>
                         <button
-                          onClick={() => { logout(); setUserMenuOpen(false); }}
-                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                          onClick={() => { setUserMenuOpen(false); window.location.href = "/dashboard"; }}
+                          className="w-full flex items-center gap-2 px-4 py-3 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
                         >
-                          <LogOut size={14} />
-                          Sign Out
+                          <LayoutDashboard size={14} />
+                          Dashboard
                         </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                        <button
+                          onClick={() => { setUserMenuOpen(false); setUploadOpen(true); }}
+                          className="w-full flex items-center gap-2 px-4 py-3 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                        >
+                          <Upload size={14} />
+                          Upload Link
+                        </button>
+                        <div className="border-t border-white/5">
+                          <button
+                            onClick={() => { logout(); setUserMenuOpen(false); }}
+                            className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                          >
+                            <LogOut size={14} />
+                            Sign Out
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             ) : (
               <>
-                <button
-                  onClick={() => openAuth("login")}
-                  className="px-4 py-2 rounded-xl text-sm font-medium text-text-secondary hover:text-white hover:bg-white/5 transition-all"
-                >
+                <button onClick={() => openAuth("login")}
+                  className="px-4 py-2 rounded-xl text-sm font-medium text-text-secondary hover:text-white hover:bg-white/5 transition-all">
                   Sign In
                 </button>
-                <button
-                  onClick={() => openAuth("signup")}
+                <button onClick={() => openAuth("signup")}
                   className="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all"
-                  style={{ background: "linear-gradient(135deg,#7c3aed,#3b82f6)", boxShadow: "0 4px 15px rgba(124,58,237,0.3)" }}
-                >
+                  style={{ background: "linear-gradient(135deg,#7c3aed,#3b82f6)", boxShadow: "0 4px 15px rgba(124,58,237,0.3)" }}>
                   Sign Up
                 </button>
               </>
@@ -184,10 +161,8 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Toggle */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 rounded-lg text-text-secondary hover:text-white hover:bg-white/5 transition-colors"
-          >
+          <button onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden p-2 rounded-lg text-text-secondary hover:text-white hover:bg-white/5 transition-colors">
             {mobileOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </nav>
@@ -204,33 +179,23 @@ export default function Navbar() {
             >
               <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-1">
                 {[["Home", "/"], ["Public", "/public"], ["Database", "/database"]].map(([label, href]) => (
-                  <Link
-                    key={label}
-                    href={href}
-                    onClick={() => setMobileOpen(false)}
-                    className="px-4 py-3 rounded-xl text-text-secondary hover:text-white hover:bg-white/5 transition-colors font-medium text-sm"
-                  >
+                  <Link key={label} href={href} onClick={() => setMobileOpen(false)}
+                    className="px-4 py-3 rounded-xl text-text-secondary hover:text-white hover:bg-white/5 transition-colors font-medium text-sm">
                     {label}
                   </Link>
                 ))}
-                {([
-                  ["About Us", () => { setAboutOpen(true); setMobileOpen(false); }],
-                  ["Terms",    () => { setTermsOpen(true);  setMobileOpen(false); }],
-                  ["Privacy Policy", () => { setPrivacyOpen(true); setMobileOpen(false); }],
-                ] as [string, () => void][]).map(([label, fn]) => (
-                  <button
-                    key={label}
-                    onClick={fn}
-                    className="px-4 py-3 rounded-xl text-text-secondary hover:text-white hover:bg-white/5 transition-colors font-medium text-sm text-left"
-                  >
-                    {label}
+                {[["About Us", () => { setAboutOpen(true); setMobileOpen(false); }],
+                  ["Terms", () => { setTermsOpen(true); setMobileOpen(false); }],
+                  ["Privacy Policy", () => { setPrivacyOpen(true); setMobileOpen(false); }]
+                ].map(([label, fn]) => (
+                  <button key={label as string} onClick={fn as () => void}
+                    className="px-4 py-3 rounded-xl text-text-secondary hover:text-white hover:bg-white/5 transition-colors font-medium text-sm text-left">
+                    {label as string}
                   </button>
                 ))}
-
                 <div className="border-t border-white/5 pt-3 mt-1 flex flex-col gap-2">
                   {currentUser ? (
                     <div className="flex flex-col gap-2">
-                      {/* Mobile: Dashboard */}
                       <button
                         onClick={() => { setMobileOpen(false); window.location.href = "/dashboard"; }}
                         className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-white transition-all w-full"
@@ -238,43 +203,33 @@ export default function Navbar() {
                       >
                         <LayoutDashboard size={15} />Dashboard
                       </button>
-
-                      {/* Mobile: Upload Link */}
                       <button
                         onClick={() => { setUploadOpen(true); setMobileOpen(false); }}
                         className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all"
                         style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", color: "#34d399" }}
                       >
-                        <Upload size={15} />Upload Link
+                        <Upload size={15} />Upload a File
                       </button>
-
-                      {/* Mobile: User info + Sign Out */}
                       <div className="px-4 py-2 flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium text-white">{currentUser.name}</p>
                           <p className="text-xs text-text-muted">{currentUser.email}</p>
                         </div>
-                        <button
-                          onClick={() => { logout(); setMobileOpen(false); }}
-                          className="text-red-400 text-sm flex items-center gap-1"
-                        >
+                        <button onClick={() => { logout(); setMobileOpen(false); }}
+                          className="text-red-400 text-sm flex items-center gap-1">
                           <LogOut size={14} />Sign Out
                         </button>
                       </div>
                     </div>
                   ) : (
                     <>
-                      <button
-                        onClick={() => openAuth("login")}
-                        className="px-4 py-3 rounded-xl text-center text-sm font-medium text-white hover:bg-white/5 transition-colors border border-white/10"
-                      >
+                      <button onClick={() => openAuth("login")}
+                        className="px-4 py-3 rounded-xl text-center text-sm font-medium text-white hover:bg-white/5 transition-colors border border-white/10">
                         Sign In
                       </button>
-                      <button
-                        onClick={() => openAuth("signup")}
+                      <button onClick={() => openAuth("signup")}
                         className="px-4 py-3 rounded-xl text-center text-sm font-semibold text-white transition-all"
-                        style={{ background: "linear-gradient(135deg,#7c3aed,#3b82f6)" }}
-                      >
+                        style={{ background: "linear-gradient(135deg,#7c3aed,#3b82f6)" }}>
                         Sign Up Free
                       </button>
                     </>
@@ -291,7 +246,6 @@ export default function Navbar() {
       <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
       <TermsModal open={termsOpen} onClose={() => setTermsOpen(false)} />
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} defaultTab={authTab} />
-      {/* ✅ FIX: Only one instance of UserUploadModal (was duplicated before) */}
       <UserUploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} />
     </>
   );
