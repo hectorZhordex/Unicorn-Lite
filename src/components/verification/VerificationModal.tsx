@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import {
   X, ExternalLink, CheckCircle2, Circle, Clock,
   Download, Shield, Zap, ArrowRight, Lock
