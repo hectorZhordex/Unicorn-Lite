@@ -86,7 +86,7 @@ function HomeContent() {
           </h1>
 
           <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-2">
-            BlueOrbit Technologies is a cloud platform that enables creators, developers, and businesses to securely store, distribute, and monetize digital content worldwide. Our platform provides reliable file hosting, database storage, analytics, and creator-focused monetization tools designed for modern digital enterprises.
+            BlueOrbit is a cloud platform that enables creators, developers, and businesses to securely store, distribute, and monetize digital content worldwide. Our platform provides reliable file hosting, database storage, analytics, and creator-focused monetization tools designed for modern digital enterprises.
 
           </p>
 
