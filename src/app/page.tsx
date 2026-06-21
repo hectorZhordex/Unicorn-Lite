@@ -77,16 +77,17 @@ function HomeContent() {
 
           {/* Headline */}
           <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold leading-[1.05] tracking-tight text-white mb-5 sm:mb-6">
-            Store. Share.{" "}
+            Secure Cloud Sharing.{" "}
             <br className="hidden sm:block" />
             <span style={{
               background: "linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #34d399 100%)",
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-            }}>Earn.</span>
+            }}>Enterprise Guarded</span>
           </h1>
 
           <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-2">
-            BlueOrbit is a U.S.-based cloud storage and creator monetization platform. Upload files, host databases, share content globally, and earn revenue - all in one place.
+            BlueOrbit Technologies is a cloud platform that enables creators, developers, and businesses to securely store, distribute, and monetize digital content worldwide. Our platform provides reliable file hosting, database storage, analytics, and creator-focused monetization tools designed for modern digital enterprises.
+
           </p>
 
           {/* CTAs */}
