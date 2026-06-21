@@ -1,656 +1,376 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { m as motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
+import { Suspense, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import {
-  LayoutDashboard, Files, Upload, Database, Share2, Home,
-  DollarSign, BarChart3, CreditCard, Settings, Globe,
-  LogOut, Search, Bell, ChevronDown, Menu, X,
-  Eye, Download, ArrowUpRight, Lock, Layers, Plus,
-  FileText, AlertCircle
+  Cloud, Shield, Zap, Globe, Database, Upload,
+  DollarSign, Lock, Server, ArrowRight, Check,
+  Star, LayoutDashboard
 } from "lucide-react";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 import { useAuthStore } from "@/lib/auth-store";
-import { useSettingsStore } from "@/lib/settings-store";
-import UserUploadModal from "@/components/upload/UserUploadModal";
-import { useUploadsStore } from "@/lib/uploads-store";
-import { type Artwork } from "@/types";
+import AuthModal from "@/components/layout/AuthModal";
 
-type DashTab = "dashboard" | "files" | "upload" | "database" | "shared" | "earnings" | "analytics" | "payouts" | "settings";
+function HomeContent() {
+  const { currentUser } = useAuthStore();
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authTab, setAuthTab] = useState<"login" | "signup">("signup");
 
-/* ── Storage donut ── */
-function StorageDonut({ used, total }: { used: number; total: number }) {
-  const pct = total > 0 ? used / total : 0;
-  const r = 52, cx = 64, cy = 64;
-  const circ = 2 * Math.PI * r;
-  const dash = circ * pct;
-  return (
-    <svg viewBox="0 0 128 128" className="w-28 h-28 sm:w-32 sm:h-32">
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="14" />
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="url(#donutGrad)" strokeWidth="14"
-        strokeDasharray={`${dash} ${circ - dash}`} strokeLinecap="round"
-        transform={`rotate(-90 ${cx} ${cy})`} />
-      <defs>
-        <linearGradient id="donutGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#7c3aed" /><stop offset="100%" stopColor="#3b82f6" />
-        </linearGradient>
-      </defs>
-      <text x={cx} y={cy - 6} textAnchor="middle" fill="white" fontSize="18" fontWeight="bold">
-        {Math.round(pct * 100)}%
-      </text>
-      <text x={cx} y={cy + 12} textAnchor="middle" fill="#64748b" fontSize="9">Used</text>
-    </svg>
-  );
-}
-
-/* ── Empty state helper ── */
-function EmptyState({ icon: Icon, title, sub, action, onAction }: {
-  icon: typeof Files; title: string; sub: string; action?: string; onAction?: () => void;
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-        style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}>
-        <Icon size={22} className="text-purple-400" />
-      </div>
-      <h3 className="text-base font-semibold text-white mb-1">{title}</h3>
-      <p className="text-sm text-slate-500 max-w-xs mb-4">{sub}</p>
-      {action && onAction && (
-        <button onClick={onAction}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white transition-all"
-          style={{ background: "linear-gradient(135deg,#7c3aed,#3b82f6)" }}>
-          <Plus size={15} />{action}
-        </button>
-      )}
-    </div>
-  );
-}
-
-export default function DashboardPage() {
-  const router = useRouter();
-  const { currentUser, logout } = useAuthStore();
-  const { settings } = useSettingsStore();
-  const { uploads } = useUploadsStore();
-  const [tab, setTab] = useState<DashTab>("dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-
-  useEffect(() => {
-    if (!currentUser) router.push("/");
-  }, [currentUser, router]);
-
-  if (!currentUser) return null;
-
-  const handleLogout = () => { logout(); router.push("/"); };
-
-  // Real data from user's uploads
-  const userFiles: Artwork[] = uploads;
-  const publicFiles = userFiles.filter((f) => f.is_active);
-  const totalDownloads = userFiles.reduce((s, f) => s + (f.downloads || 0), 0);
-  const totalViews = userFiles.reduce((s, f) => s + (f.views || 0), 0);
-
-  const NAV: { id: DashTab; icon: typeof LayoutDashboard; label: string }[] = [
-    { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { id: "files", icon: Files, label: "Files" },
-    { id: "upload", icon: Upload, label: "Upload Link" },
-    { id: "database", icon: Database, label: "Database" },
-    { id: "shared", icon: Share2, label: "Shared Files" },
-    { id: "earnings", icon: DollarSign, label: "Earnings" },
-    { id: "analytics", icon: BarChart3, label: "Analytics" },
-    { id: "payouts", icon: CreditCard, label: "Payouts" },
-    { id: "settings", icon: Settings, label: "Settings" },
+  const FEATURES = [
+    { icon: Cloud, title: "Cloud File Storage", desc: "Store, access, and manage your files securely from anywhere in the world with our high-performance cloud infrastructure.", color: "#7c3aed" },
+    { icon: Shield, title: "End-to-End Security", desc: "Your data is encrypted at rest and in transit. Private files are accessible only by you, protected by enterprise-grade security controls.", color: "#3b82f6" },
+    { icon: DollarSign, title: "Creator Monetization", desc: "Upload and share files publicly. Earn revenue every time a visitor unlocks your content through our built-in verification and ad system.", color: "#10b981" },
+    { icon: Globe, title: "Global CDN Delivery", desc: "Files are distributed across our global network ensuring fast access for every visitor regardless of their location.", color: "#f59e0b" },
+    { icon: Database, title: "Database Hosting", desc: "Lifetime database plans with generous storage, millions of records, and full API access for your applications.", color: "#06b6d4" },
+    { icon: Server, title: "Scalable Infrastructure", desc: "Built for reliability. Our platform scales automatically to handle growing traffic, storage needs, and database demands.", color: "#ec4899" },
   ];
 
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full">
-      <div className="px-5 py-5 border-b border-white/5">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
-            <Image src={settings.logoImage || "/favicon.png"} alt="Logo" width={32} height={32}
-              className="w-full h-full object-cover" unoptimized />
-          </div>
-          <span className="font-bold text-white text-base sm:text-lg">{settings.logoText}</span>
-        </Link>
-      </div>
+  const STEPS = [
+    { n: "01", title: "Create your account", desc: "Sign up for free in seconds. No credit card required to get started with file hosting and public sharing." },
+    { n: "02", title: "Upload your files", desc: "Upload any file type. Choose public or private visibility. Paste a cloud drive link as your download source." },
+    { n: "03", title: "Share and earn", desc: "Share your public files. Every time a visitor unlocks your content, you earn revenue through our monetization system." },
+  ];
 
-      <nav className="flex-1 p-3 sm:p-4 space-y-0.5 overflow-y-auto">
-        <a href="/" className="w-full flex items-center gap-3 px-3 sm:px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-white/5">
-          <Home size={17} />Home
-        </a>
-        {NAV.map(({ id, icon: Icon, label }) => (
-          <button key={id}
-            onClick={() => { setTab(id); setSidebarOpen(false); if (id === "upload") setUploadOpen(true); }}
-            className={`w-full flex items-center gap-3 px-3 sm:px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-              tab === id && id !== "upload"
-                ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
-                : "text-slate-400 hover:text-white hover:bg-white/5"
-            }`}>
-            <Icon size={17} />{label}
-          </button>
-        ))}
-      </nav>
+  const STATS = [
+    { value: "120K+", label: "Files Hosted" },
+    { value: "8,400+", label: "Active Creators" },
+    { value: "$284K+", label: "Creator Earnings" },
+    { value: "99.9%", label: "Uptime" },
+  ];
 
-      <div className="p-3 sm:p-4 border-t border-white/5">
-        <button onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors">
-          <LogOut size={17} />Sign Out
-        </button>
-      </div>
-    </div>
-  );
+  const PRICING_PREVIEW = [
+    { name: "Free", price: "$0", features: ["5 GB Storage", "Public File Sharing", "Basic Analytics", "Community Support"], highlight: false },
+    { name: "Professional", price: "$500", period: "Lifetime", features: ["1 TB Database", "500 GB File Storage", "API Access", "Priority Support"], highlight: true },
+    { name: "Enterprise", price: "$1,000", period: "Lifetime", features: ["5 TB Database", "2 TB File Storage", "Dedicated Resources", "24/7 Support"], highlight: false },
+  ];
+
+  const handleStartFree = () => {
+    if (currentUser) {
+      window.location.href = "/dashboard";
+    } else {
+      setAuthTab("signup");
+      setAuthOpen(true);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-52 lg:w-56 fixed top-0 left-0 bottom-0 z-30"
-        style={{ background: "rgb(8,8,20)", borderRight: "1px solid rgba(255,255,255,0.05)" }}>
-        <SidebarContent />
-      </aside>
+    <div className="min-h-screen bg-background">
+      <Navbar />
 
-      {/* Mobile Sidebar */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black/60 md:hidden" onClick={() => setSidebarOpen(false)} />
-            <motion.aside initial={{ x: -260 }} animate={{ x: 0 }} exit={{ x: -260 }}
-              transition={{ type: "spring", damping: 28, stiffness: 280 }}
-              className="fixed left-0 top-0 bottom-0 w-52 z-50 md:hidden"
-              style={{ background: "rgb(8,8,20)", borderRight: "1px solid rgba(255,255,255,0.05)" }}>
-              <SidebarContent />
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+      {/* ── HERO ── */}
+      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 sm:px-6 pt-20 pb-16 overflow-hidden">
+        {/* Orbs */}
+        <div className="absolute top-0 left-[-20%] w-[500px] h-[500px] rounded-full pointer-events-none"
+          style={{ background: "radial-gradient(circle, rgba(124,58,237,0.18) 0%, transparent 70%)" }} />
+        <div className="absolute top-[-10%] right-[-15%] w-[450px] h-[450px] rounded-full pointer-events-none"
+          style={{ background: "radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%)" }} />
 
-      {/* Main */}
-      <div className="flex-1 md:ml-52 lg:ml-56 min-w-0">
-        {/* Topbar */}
-        <div className="sticky top-0 z-20 flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-3.5"
-          style={{ background: "rgb(8,8,20)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-          <button onClick={() => setSidebarOpen(true)}
-            className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
-            <Menu size={20} />
-          </button>
-
-          <div className="flex-1 relative max-w-xs sm:max-w-md hidden sm:block">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-            <input placeholder="Search files..."
-              className="w-full pl-9 pr-4 py-2 rounded-xl text-sm outline-none"
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)", color: "#94a3b8" }} />
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }} className="max-w-5xl mx-auto w-full">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-medium mb-6 sm:mb-7"
+            style={{ background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.3)", color: "#a78bfa" }}>
+            <Star size={13} fill="currentColor" />
+            The Cloud Platform for Creators and Businesses
           </div>
 
-          <div className="flex items-center gap-2 ml-auto">
-            <div className="relative">
-              <button onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-xl transition-all"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                  style={{ background: "linear-gradient(135deg,#7c3aed,#3b82f6)" }}>
-                  {currentUser.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="hidden sm:block text-left">
-                  <p className="text-xs font-semibold text-white leading-none">{currentUser.name}</p>
-                  <p className="text-[10px] text-slate-500 leading-none mt-0.5">Basic Account</p>
-                </div>
-                <ChevronDown size={14} className="text-slate-500 hidden sm:block" />
+          {/* Headline */}
+          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold leading-[1.05] tracking-tight text-white mb-5 sm:mb-6">
+            Store. Share.{" "}
+            <br className="hidden sm:block" />
+            <span style={{
+              background: "linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #34d399 100%)",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+            }}>Earn.</span>
+          </h1>
+
+          <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-2">
+            BlueOrbit is a U.S.-based cloud storage and creator monetization platform. Upload files, host databases, share content globally, and earn revenue - all in one place.
+          </p>
+
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-12 sm:mb-16">
+            {currentUser ? (
+              <Link href="/dashboard"
+                className="flex items-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl text-sm sm:text-base font-bold text-white w-full sm:w-auto justify-center"
+                style={{ background: "linear-gradient(135deg, #7c3aed, #3b82f6)", boxShadow: "0 6px 30px rgba(124,58,237,0.4)" }}>
+                <LayoutDashboard size={18} />
+                Go to Dashboard
+                <ArrowRight size={16} />
+              </Link>
+            ) : (
+              <button onClick={handleStartFree}
+                className="flex items-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl text-sm sm:text-base font-bold text-white w-full sm:w-auto justify-center transition-all"
+                style={{ background: "linear-gradient(135deg, #7c3aed, #3b82f6)", boxShadow: "0 6px 30px rgba(124,58,237,0.4)" }}>
+                <Upload size={18} />
+                Start for Free
+                <ArrowRight size={16} />
               </button>
-              <AnimatePresence>
-                {userMenuOpen && (
-                  <motion.div initial={{ opacity: 0, y: 6, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 4, scale: 0.95 }}
-                    className="absolute right-0 top-full mt-2 w-44 rounded-xl overflow-hidden z-50"
-                    style={{ background: "rgb(13,13,26)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 8px 32px rgba(0,0,0,0.6)" }}>
-                    <div className="px-4 py-3 border-b border-white/5">
-                      <p className="text-xs font-medium text-white truncate">{currentUser.name}</p>
-                      <p className="text-xs text-slate-500 truncate">{currentUser.email}</p>
-                    </div>
-                    <button onClick={() => { setUserMenuOpen(false); setTab("settings"); }}
-                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
-                      <Settings size={14} />Settings
-                    </button>
-                    <button onClick={handleLogout}
-                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors">
-                      <LogOut size={14} />Sign Out
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-        </div>
-
-        {/* Tab Content */}
-        <div className="p-3 sm:p-5 lg:p-6">
-          <AnimatePresence mode="wait">
-            <motion.div key={tab}
-              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.18 }}>
-              {tab === "dashboard" && (
-                <DashboardHome
-                  user={currentUser}
-                  files={userFiles}
-                  totalDownloads={totalDownloads}
-                  totalViews={totalViews}
-                  onUpload={() => setUploadOpen(true)}
-                />
-              )}
-              {tab === "files" && <FilesTab files={userFiles} onUpload={() => setUploadOpen(true)} />}
-              {tab === "database" && <DatabaseTab />}
-              {tab === "shared" && <SharedTab files={publicFiles} />}
-              {tab === "earnings" && <EarningsTab files={userFiles} />}
-              {tab === "analytics" && <AnalyticsTab files={userFiles} />}
-              {tab === "payouts" && <PayoutsTab />}
-              {tab === "settings" && <SettingsTab user={currentUser} />}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </div>
-
-      <UserUploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} />
-    </div>
-  );
-}
-
-/* ─── DASHBOARD HOME ─── */
-function DashboardHome({ user, files, totalDownloads, totalViews, onUpload }: {
-  user: any; files: Artwork[]; totalDownloads: number; totalViews: number; onUpload: () => void;
-}) {
-  const stats = [
-    { icon: Files, label: "Total Files", value: files.length.toString(), color: "#7c3aed" },
-    { icon: Download, label: "Downloads", value: totalDownloads.toString(), color: "#3b82f6" },
-    { icon: Eye, label: "Views", value: totalViews.toString(), color: "#10b981" },
-    { icon: DollarSign, label: "Earnings", value: "$0.00", color: "#f59e0b" },
-  ];
-
-  return (
-    <div className="space-y-4 sm:space-y-6">
-      <div>
-        <h1 className="text-lg sm:text-xl font-bold text-white">Welcome back, {user.name}!</h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Here is an overview of your account.</p>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {stats.map(({ icon: Icon, label, value, color }, i) => (
-          <motion.div key={label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.07 }}
-            className="p-4 sm:p-5 rounded-2xl"
-            style={{ background: "rgba(13,13,26,0.9)", border: "1px solid rgba(255,255,255,0.06)" }}>
-            <div className="flex items-start justify-between mb-3">
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center"
-                style={{ background: `${color}20`, border: `1px solid ${color}40` }}>
-                <Icon size={16} style={{ color }} />
-              </div>
-            </div>
-            <p className="text-xl sm:text-2xl font-bold text-white">{value}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{label}</p>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Recent Files + Storage */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 rounded-2xl p-4 sm:p-5"
-          style={{ background: "rgba(13,13,26,0.9)", border: "1px solid rgba(255,255,255,0.06)" }}>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-white">Recent Files</h2>
-            {files.length > 0 && (
-              <span className="text-xs text-slate-500">{files.length} total</span>
             )}
+            <Link href="/database"
+              className="flex items-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl text-sm sm:text-base font-semibold text-white w-full sm:w-auto justify-center transition-all"
+              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)" }}>
+              <Database size={18} />
+              View Database Plans
+            </Link>
           </div>
-          {files.length === 0 ? (
-            <EmptyState icon={Upload} title="No files yet" sub="Upload your first file to get started."
-              action="Upload File" onAction={onUpload} />
-          ) : (
-            <div className="space-y-2">
-              {files.slice(0, 4).map((f) => (
-                <div key={f.id} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/3 transition-colors">
-                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
-                    style={{ background: "rgba(124,58,237,0.15)", color: "#a78bfa" }}>
-                    {(f.file_format || "FILE").slice(0, 3)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs sm:text-sm font-medium text-white truncate">{f.title}</p>
-                    <p className="text-xs text-slate-500">{f.file_size || "—"} · {new Date(f.created_at).toLocaleDateString()}</p>
-                  </div>
-                  <span className="text-xs px-2 py-0.5 rounded-full text-green-400 flex-shrink-0"
-                    style={{ background: "rgba(16,185,129,0.12)" }}>Public</span>
+
+          {/* Hero visual — dashboard preview */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="relative mx-auto max-w-4xl rounded-2xl overflow-hidden"
+            style={{ border: "1px solid rgba(124,58,237,0.25)", boxShadow: "0 40px 120px rgba(124,58,237,0.2), 0 0 0 1px rgba(255,255,255,0.04)" }}
+          >
+            <div className="bg-[#0d0d1a] p-0">
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5">
+                <div className="w-3 h-3 rounded-full bg-red-500/60" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
+                <div className="w-3 h-3 rounded-full bg-green-500/60" />
+                <div className="flex-1 mx-4 h-6 rounded-lg bg-white/5" />
+              </div>
+              <div className="flex">
+                <div className="hidden sm:block w-36 border-r border-white/5 p-3 space-y-1">
+                  {["Dashboard","Files","Upload","Earnings","Analytics"].map((item, i) => (
+                    <div key={item} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
+                      style={{ background: i === 0 ? "rgba(124,58,237,0.2)" : "transparent", color: i === 0 ? "#a78bfa" : "#475569" }}>
+                      <div className="w-2.5 h-2.5 rounded-sm bg-current opacity-60" />
+                      {item}
+                    </div>
+                  ))}
                 </div>
+                <div className="flex-1 p-4 space-y-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[["1,248","Total Files","#7c3aed"],["3,654","Downloads","#3b82f6"],["18,392","Views","#10b981"],["$1,248","Earnings","#f59e0b"]].map(([v,l,c]) => (
+                      <div key={l} className="p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                        <div className="text-sm sm:text-base font-bold" style={{ color: c as string }}>{v}</div>
+                        <div className="text-xs text-slate-600">{l}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="h-20 sm:h-24 rounded-xl flex items-end gap-1 p-3"
+                    style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                    {[40,60,45,80,55,90,75].map((h, i) => (
+                      <div key={i} className="flex-1 rounded-sm"
+                        style={{ height: `${h}%`, background: `linear-gradient(to top, #7c3aed, #3b82f6)`, opacity: 0.6 + i * 0.05 }} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* ── STATS ── */}
+      <section className="py-12 sm:py-14 px-4">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 text-center">
+          {STATS.map(({ value, label }, i) => (
+            <motion.div key={label} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
+              <p className="text-2xl sm:text-3xl md:text-4xl font-extrabold gradient-text mb-1">{value}</p>
+              <p className="text-xs sm:text-sm text-slate-500">{label}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── FEATURES ── */}
+      <section className="py-16 sm:py-20 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10 sm:mb-14">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-4">
+              Everything you need in one platform
+            </h2>
+            <p className="text-slate-400 text-base sm:text-lg max-w-xl mx-auto">
+              From secure file storage to creator monetization — BlueOrbit brings all your cloud needs under one roof.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {FEATURES.map(({ icon: Icon, title, desc, color }, i) => (
+              <motion.div key={title} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.08 }}
+                className="p-5 sm:p-6 rounded-2xl hover:-translate-y-1 transition-all duration-300"
+                style={{ background: "rgba(13,13,26,0.8)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: `${color}20`, border: `1px solid ${color}40` }}>
+                  <Icon size={18} style={{ color }} />
+                </div>
+                <h3 className="text-sm sm:text-base font-bold text-white mb-2">{title}</h3>
+                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">{desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ── */}
+      <section className="py-16 sm:py-20 px-4 sm:px-6"
+        style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.04), rgba(59,130,246,0.04))" }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10 sm:mb-14">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-4">How it works</h2>
+            <p className="text-slate-400 text-base sm:text-lg max-w-lg mx-auto">Start earning from your files in three simple steps.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-6">
+            {STEPS.map(({ n, title, desc }, i) => (
+              <motion.div key={n} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.15 }} className="relative text-center">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-5 text-xl sm:text-2xl font-black"
+                  style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.2), rgba(59,130,246,0.2))", border: "1px solid rgba(124,58,237,0.3)", color: "#a78bfa" }}>
+                  {n}
+                </div>
+                <h3 className="text-sm sm:text-base font-bold text-white mb-2">{title}</h3>
+                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">{desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── PRIVACY / TRUST ── */}
+      <section className="py-16 sm:py-20 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-center">
+          <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mb-5"
+              style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", color: "#34d399" }}>
+              <Lock size={12} />
+              Privacy First
+            </div>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-5">
+              Your files, your control.
+              <br />Your data stays private.
+            </h2>
+            <p className="text-slate-400 leading-relaxed mb-6 text-sm sm:text-base">
+              Private files are encrypted and accessible only by you. Public files are served globally through our CDN. You decide what is shared and what stays locked.
+            </p>
+            <ul className="space-y-3">
+              {["SSL/TLS encryption for all transfers","Private files never appear in public listings","Granular access controls per file","Audit logs for all file access events"].map((item) => (
+                <li key={item} className="flex items-center gap-3 text-xs sm:text-sm text-slate-300">
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(16,185,129,0.2)" }}>
+                    <Check size={12} className="text-green-400" />
+                  </div>
+                  {item}
+                </li>
               ))}
-            </div>
-          )}
-        </div>
-
-        <div className="rounded-2xl p-4 sm:p-5"
-          style={{ background: "rgba(13,13,26,0.9)", border: "1px solid rgba(255,255,255,0.06)" }}>
-          <h2 className="text-sm font-semibold text-white mb-4">Storage</h2>
-          <div className="flex flex-col items-center mb-4">
-            <StorageDonut used={0} total={5120} />
-          </div>
-          <div className="space-y-2">
+            </ul>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
+            className="rounded-2xl p-5 sm:p-6 space-y-3"
+            style={{ background: "rgba(13,13,26,0.9)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">Storage Overview</p>
             {[
-              { label: "Used Space", value: "0 GB", color: "#7c3aed" },
-              { label: "Free Space", value: "5 GB", color: "rgba(255,255,255,0.15)" },
-            ].map(({ label, value, color }) => (
-              <div key={label} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ background: color }} />
-                  <span className="text-slate-400">{label}</span>
+              { label: "Documents & Files", pct: 45, color: "#7c3aed", size: "310 GB" },
+              { label: "Database Storage", pct: 20, color: "#3b82f6", size: "48 GB" },
+              { label: "Shared & Public", pct: 30, color: "#10b981", size: "125 GB" },
+              { label: "Backups", pct: 5, color: "#f59e0b", size: "12 GB" },
+            ].map(({ label, pct, color, size }) => (
+              <div key={label}>
+                <div className="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>{label}</span><span style={{ color }}>{size}</span>
                 </div>
-                <span className="text-white font-medium">{value}</span>
+                <div className="h-2 rounded-full bg-white/5">
+                  <div className="h-2 rounded-full" style={{ width: `${pct}%`, background: color }} />
+                </div>
               </div>
             ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Monetization notice */}
-      <div className="rounded-2xl p-4 sm:p-5"
-        style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.2)" }}>
-        <div className="flex items-start gap-3">
-          <DollarSign size={18} className="text-purple-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-semibold text-white mb-0.5">How to start earning</p>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Upload files and share them publicly. Once your files reach 500 visits, monetization activates automatically and you start earning revenue from every unlock.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─── FILES TAB ─── */
-function FilesTab({ files, onUpload }: { files: Artwork[]; onUpload: () => void }) {
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base sm:text-lg font-bold text-white">My Files</h2>
-        <button onClick={onUpload}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium text-white transition-all"
-          style={{ background: "linear-gradient(135deg,#7c3aed,#3b82f6)" }}>
-          <Upload size={14} />Upload
-        </button>
-      </div>
-
-      {files.length === 0 ? (
-        <div className="rounded-2xl" style={{ background: "rgba(13,13,26,0.9)", border: "1px solid rgba(255,255,255,0.06)" }}>
-          <EmptyState icon={Files} title="No files uploaded yet"
-            sub="Upload your first file to share it with the community and start earning."
-            action="Upload File" onAction={onUpload} />
-        </div>
-      ) : (
-        <div className="rounded-2xl overflow-hidden"
-          style={{ background: "rgba(13,13,26,0.9)", border: "1px solid rgba(255,255,255,0.06)" }}>
-          {/* Header */}
-          <div className="px-4 py-3 border-b border-white/5 hidden sm:grid sm:grid-cols-12 text-xs text-slate-600 font-medium">
-            <span className="col-span-5">File Name</span>
-            <span className="col-span-2 text-center">Size</span>
-            <span className="col-span-2 text-center">Format</span>
-            <span className="col-span-2 text-center">Visibility</span>
-            <span className="col-span-1 text-right">Downloads</span>
-          </div>
-          {files.map((f) => (
-            <div key={f.id} className="p-3 sm:p-4 border-b border-white/5 last:border-0 hover:bg-white/2 transition-colors">
-              {/* Mobile view */}
-              <div className="sm:hidden flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
-                  style={{ background: "rgba(124,58,237,0.15)", color: "#a78bfa" }}>
-                  {(f.file_format || "FILE").slice(0, 3)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-white truncate">{f.title}</p>
-                  <p className="text-xs text-slate-500">{f.file_size || "—"} · {new Date(f.created_at).toLocaleDateString()}</p>
-                </div>
-                <span className="text-xs px-2 py-0.5 rounded-full text-green-400 flex-shrink-0"
-                  style={{ background: "rgba(16,185,129,0.12)" }}>Public</span>
-              </div>
-              {/* Desktop view */}
-              <div className="hidden sm:grid sm:grid-cols-12 items-center text-sm">
-                <div className="col-span-5 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
-                    style={{ background: "rgba(124,58,237,0.15)", color: "#a78bfa" }}>
-                    {(f.file_format || "FILE").slice(0, 3)}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-white font-medium truncate text-xs">{f.title}</p>
-                    <p className="text-slate-600 text-xs">{new Date(f.created_at).toLocaleDateString()}</p>
-                  </div>
-                </div>
-                <span className="col-span-2 text-center text-slate-400 text-xs">{f.file_size || "—"}</span>
-                <span className="col-span-2 text-center text-slate-400 text-xs">{f.file_format || "—"}</span>
-                <span className="col-span-2 text-center">
-                  <span className="text-xs px-2 py-0.5 rounded-full text-green-400" style={{ background: "rgba(16,185,129,0.12)" }}>Public</span>
-                </span>
-                <span className="col-span-1 text-right text-slate-400 text-xs">{f.downloads || 0}</span>
-              </div>
+            <div className="pt-3 border-t border-white/5 flex justify-between text-sm">
+              <span className="text-slate-500">Total Used</span>
+              <span className="text-white font-semibold">495 GB of 1 TB</span>
             </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── PRICING TEASER ── */}
+      <section className="py-16 sm:py-20 px-4 sm:px-6"
+        style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.05), rgba(6,182,212,0.05))" }}>
+        <div className="max-w-5xl mx-auto text-center mb-10 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-4">Simple, transparent pricing</h2>
+          <p className="text-slate-400 text-base sm:text-lg">One-time payment. Lifetime access. No hidden fees.</p>
+        </div>
+        <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+          {PRICING_PREVIEW.map(({ name, price, period, features, highlight }) => (
+            <motion.div key={name} whileInView={{ opacity: 1, y: 0 }} initial={{ opacity: 0, y: 20 }}
+              viewport={{ once: true }}
+              className={`rounded-2xl p-5 sm:p-6 flex flex-col ${highlight ? "ring-2 ring-blue-500/40" : ""}`}
+              style={{
+                background: highlight ? "linear-gradient(135deg, rgba(59,130,246,0.1), rgba(124,58,237,0.1))" : "rgba(13,13,26,0.8)",
+                border: highlight ? "1px solid rgba(59,130,246,0.3)" : "1px solid rgba(255,255,255,0.06)",
+              }}>
+              <p className="text-xs sm:text-sm font-semibold text-slate-400 mb-1">{name}</p>
+              <div className="flex items-end gap-1 mb-1">
+                <span className="text-2xl sm:text-3xl font-extrabold text-white">{price}</span>
+                {period && <span className="text-xs text-slate-500 mb-1">/{period}</span>}
+              </div>
+              <ul className="space-y-2 mt-4 flex-1">
+                {features.map((f) => (
+                  <li key={f} className="flex items-center gap-2 text-xs text-slate-400">
+                    <Check size={12} className="text-purple-400 flex-shrink-0" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/database"
+                className="mt-5 w-full py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-center transition-all block"
+                style={highlight
+                  ? { background: "linear-gradient(135deg,#7c3aed,#3b82f6)", color: "#fff" }
+                  : { background: "rgba(255,255,255,0.06)", color: "#94a3b8", border: "1px solid rgba(255,255,255,0.08)" }}>
+                {name === "Free" ? "Get Started" : "View Plan"}
+              </Link>
+            </motion.div>
           ))}
         </div>
-      )}
-    </div>
-  );
-}
+      </section>
 
-/* ─── DATABASE TAB ─── */
-function DatabaseTab() {
-  return (
-    <div className="space-y-5">
-      <h2 className="text-base sm:text-lg font-bold text-white">Database</h2>
-      <div className="rounded-2xl p-5 sm:p-6"
-        style={{ background: "rgba(13,13,26,0.9)", border: "1px solid rgba(255,255,255,0.06)" }}>
-        <EmptyState icon={Database} title="No database plan active"
-          sub="Upgrade to a lifetime database plan to get storage, projects, and records for your applications." />
-        <div className="flex justify-center mt-2">
-          <Link href="/database" className="btn-primary py-2.5 px-6 text-sm inline-flex items-center gap-2">
-            View Database Plans
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─── SHARED FILES TAB ─── */
-function SharedTab({ files }: { files: Artwork[] }) {
-  return (
-    <div className="space-y-4">
-      <h2 className="text-base sm:text-lg font-bold text-white">Shared Files</h2>
-      {files.length === 0 ? (
-        <div className="rounded-2xl" style={{ background: "rgba(13,13,26,0.9)", border: "1px solid rgba(255,255,255,0.06)" }}>
-          <EmptyState icon={Share2} title="No shared files"
-            sub="Files you upload publicly will appear here." />
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {files.map((f) => (
-            <div key={f.id} className="flex items-center gap-4 p-4 rounded-2xl"
-              style={{ background: "rgba(13,13,26,0.9)", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0"
-                style={{ background: "rgba(124,58,237,0.15)", color: "#a78bfa" }}>
-                {(f.file_format || "FILE").slice(0, 3)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">{f.title}</p>
-                <p className="text-xs text-slate-500">{f.file_size || "—"} · {f.downloads || 0} downloads</p>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Globe size={13} className="text-green-400" />
-                <span className="text-xs text-green-400">Public</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ─── EARNINGS TAB ─── */
-function EarningsTab({ files }: { files: Artwork[] }) {
-  const totalViews = files.reduce((s, f) => s + (f.views || 0), 0);
-  const needsMoreViews = totalViews < 500;
-
-  return (
-    <div className="space-y-5">
-      <h2 className="text-base sm:text-lg font-bold text-white">Earnings</h2>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        {[
-          { label: "Total Earnings", value: "$0.00", color: "#f59e0b" },
-          { label: "Total Unlocks", value: "0", color: "#7c3aed" },
-          { label: "RPM", value: "$0.00", color: "#3b82f6" },
-          { label: "Est. Monthly", value: "$0.00", color: "#10b981" },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="p-4 sm:p-5 rounded-2xl"
-            style={{ background: "rgba(13,13,26,0.9)", border: `1px solid ${color}20` }}>
-            <p className="text-xs text-slate-500 mb-1">{label}</p>
-            <p className="text-xl sm:text-2xl font-bold" style={{ color }}>{value}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="rounded-2xl p-5"
-        style={{ background: "rgba(13,13,26,0.9)", border: "1px solid rgba(255,255,255,0.06)" }}>
-        {needsMoreViews ? (
-          <div className="text-center py-8">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
-              style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}>
-              <DollarSign size={22} className="text-purple-400" />
-            </div>
-            <h3 className="text-base font-semibold text-white mb-2">Monetization Not Active Yet</h3>
-            <p className="text-sm text-slate-400 max-w-sm mx-auto mb-4">
-              Your files need to reach <span className="text-white font-semibold">500 total views</span> before monetization activates automatically.
+      {/* ── FINAL CTA ── */}
+      <section className="py-20 sm:py-24 px-4 sm:px-6 text-center">
+        <div className="max-w-3xl mx-auto">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-5">
+              Start building on BlueOrbit today
+            </h2>
+            <p className="text-slate-400 text-base sm:text-lg mb-8 max-w-xl mx-auto">
+              Join thousands of creators and businesses who trust BlueOrbit for cloud storage, file hosting, and earning revenue.
             </p>
-            <div className="max-w-xs mx-auto mb-2">
-              <div className="flex justify-between text-xs text-slate-500 mb-1">
-                <span>{totalViews} views</span>
-                <span>500 required</span>
-              </div>
-              <div className="h-2 rounded-full bg-white/5">
-                <div className="h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min((totalViews / 500) * 100, 100)}%`, background: "linear-gradient(90deg,#7c3aed,#3b82f6)" }} />
-              </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link href="/public"
+                className="flex items-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl text-sm sm:text-base font-bold text-white w-full sm:w-auto justify-center transition-all"
+                style={{ background: "linear-gradient(135deg,#7c3aed,#3b82f6)", boxShadow: "0 6px 30px rgba(124,58,237,0.4)" }}>
+                Explore Public Files
+                <ArrowRight size={16} />
+              </Link>
+              <Link href="/database"
+                className="flex items-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl text-sm sm:text-base font-semibold text-white w-full sm:w-auto justify-center transition-all"
+                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                View Database Plans
+              </Link>
             </div>
-            <p className="text-xs text-slate-600">{Math.max(0, 500 - totalViews)} more views needed</p>
-          </div>
-        ) : (
-          <EmptyState icon={DollarSign} title="No earnings yet" sub="You have enough views. Earnings will appear as visitors unlock your files." />
-        )}
-      </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <Footer />
+
+      <AuthModal
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        defaultTab={authTab}
+      />
     </div>
   );
 }
 
-/* ─── ANALYTICS TAB ─── */
-function AnalyticsTab({ files }: { files: Artwork[] }) {
-  const totalViews = files.reduce((s, f) => s + (f.views || 0), 0);
-  const totalDownloads = files.reduce((s, f) => s + (f.downloads || 0), 0);
-
+export default function HomePage() {
   return (
-    <div className="space-y-5">
-      <h2 className="text-base sm:text-lg font-bold text-white">Analytics</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        {[
-          { label: "Total Files", value: files.length.toString(), color: "#7c3aed" },
-          { label: "Total Views", value: totalViews.toString(), color: "#3b82f6" },
-          { label: "Downloads", value: totalDownloads.toString(), color: "#10b981" },
-          { label: "Storage Used", value: "0 GB", color: "#f59e0b" },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="p-4 rounded-2xl"
-            style={{ background: "rgba(13,13,26,0.9)", border: "1px solid rgba(255,255,255,0.06)" }}>
-            <p className="text-xs text-slate-500 mb-1">{label}</p>
-            <p className="text-xl font-bold" style={{ color }}>{value}</p>
-          </div>
-        ))}
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-10 h-10 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
       </div>
-
-      <div className="rounded-2xl p-5"
-        style={{ background: "rgba(13,13,26,0.9)", border: "1px solid rgba(255,255,255,0.06)" }}>
-        <h3 className="text-sm font-semibold text-white mb-4">Top Performing Files</h3>
-        {files.length === 0 ? (
-          <EmptyState icon={BarChart3} title="No data available"
-            sub="Upload files to start tracking performance and analytics." />
-        ) : (
-          <div className="space-y-3">
-            {files.slice(0, 5).map((f, i) => (
-              <div key={f.id} className="flex items-center gap-3">
-                <span className="text-xs font-bold text-purple-400 w-4 flex-shrink-0">{i + 1}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-white truncate">{f.title}</p>
-                  <div className="h-1.5 rounded-full bg-white/5 mt-1">
-                    <div className="h-1.5 rounded-full"
-                      style={{ width: `${Math.min(((f.views || 0) / Math.max(1, Math.max(...files.map(x => x.views || 0)))) * 100, 100)}%`, background: "linear-gradient(90deg,#7c3aed,#3b82f6)" }} />
-                  </div>
-                </div>
-                <span className="text-xs text-slate-400 flex-shrink-0">{f.views || 0} views</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ─── PAYOUTS TAB ─── */
-function PayoutsTab() {
-  return (
-    <div className="space-y-5">
-      <h2 className="text-base sm:text-lg font-bold text-white">Payouts</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          { label: "Available Balance", value: "$0.00", sub: "Nothing to withdraw yet", color: "#10b981" },
-          { label: "Pending", value: "$0.00", sub: "No pending payouts", color: "#f59e0b" },
-          { label: "Total Paid Out", value: "$0.00", sub: "All time", color: "#3b82f6" },
-        ].map(({ label, value, sub, color }) => (
-          <div key={label} className="p-5 rounded-2xl"
-            style={{ background: "rgba(13,13,26,0.9)", border: "1px solid rgba(255,255,255,0.06)" }}>
-            <p className="text-xs text-slate-500 mb-1">{label}</p>
-            <p className="text-2xl font-bold mb-0.5" style={{ color }}>{value}</p>
-            <p className="text-xs text-slate-600">{sub}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="rounded-2xl p-5"
-        style={{ background: "rgba(13,13,26,0.9)", border: "1px solid rgba(255,255,255,0.06)" }}>
-        <h3 className="text-sm font-semibold text-white mb-4">Payout Method</h3>
-        <EmptyState icon={CreditCard} title="No payout method added"
-          sub="Payout methods will be available once your earnings reach the minimum threshold. Contact support to set up payouts." />
-      </div>
-    </div>
-  );
-}
-
-/* ─── SETTINGS TAB ─── */
-function SettingsTab({ user }: { user: any }) {
-  return (
-    <div className="space-y-5 max-w-xl">
-      <h2 className="text-base sm:text-lg font-bold text-white">Settings</h2>
-      <div className="rounded-2xl p-5 sm:p-6 space-y-4"
-        style={{ background: "rgba(13,13,26,0.9)", border: "1px solid rgba(255,255,255,0.06)" }}>
-        <h3 className="text-sm font-semibold text-white">Profile</h3>
-        <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1.5">Full Name</label>
-          <input defaultValue={user.name} className="input-field text-sm" />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1.5">Email Address</label>
-          <input defaultValue={user.email} className="input-field text-sm" disabled
-            style={{ opacity: 0.6, cursor: "not-allowed" }} />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1.5">Account Type</label>
-          <div className="input-field text-sm text-slate-400">Basic</div>
-        </div>
-        <button className="btn-primary py-2.5 px-6 text-sm">Save Changes</button>
-      </div>
-    </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }

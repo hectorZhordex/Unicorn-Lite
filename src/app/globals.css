@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -234,4 +232,15 @@ body {
   background: #0d0d1a;
   border-radius: inherit;
   z-index: -1;
+}
+
+/* ── Visibility failsafe ─────────────────────────────────────────────────────
+   If framer-motion animations don’t fire (CSP / eval block / hydration issue),
+   this ensures content becomes visible after 800ms via pure CSS.             */
+@keyframes fm-reveal {
+  to { opacity: 1; transform: translateY(0) translateX(0) scale(1); }
+}
+header, main, section, footer, nav, aside,
+[class*="min-h-screen"] > div {
+  animation: fm-reveal 0.6s 0.8s both;
 }
