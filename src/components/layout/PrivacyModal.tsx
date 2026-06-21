@@ -1,20 +1,14 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy | BlueOrbit Technologies",
-  description:
-    "Learn how BlueOrbit Technologies collects, uses, stores, and protects your personal information when you use our cloud storage and file hosting platform.",
-  openGraph: {
-    title: "Privacy Policy | BlueOrbit Technologies",
-    description:
-      "BlueOrbit Technologies Privacy Policy — data collection, usage, storage, sharing, and your rights as a user.",
-    type: "website",
-  },
-};
+import { useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
 
-/* ── Shared content (same data as PrivacyModal SECTIONS) ── */
+interface Props {
+  open: boolean;
+  onClose: () => void;
+}
+
 const SECTIONS = [
   {
     title: "1. Introduction",
@@ -49,14 +43,8 @@ const SECTIONS = [
     title: "4. Public and Private File Storage",
     body: "BlueOrbit offers both public and private storage options.",
     sub: [
-      {
-        label: "Public Files",
-        text: "Files uploaded to public storage areas or shared via public links may be accessible to any visitor on or off the platform. Public files may appear in platform discovery features and search results. Users who share files publicly accept that their content may be viewed, accessed, or downloaded by third parties. You are solely responsible for ensuring that publicly shared content does not contain sensitive, confidential, or proprietary information.",
-      },
-      {
-        label: "Private Files",
-        text: "Files designated as private are restricted to your account and authorized users only. BlueOrbit implements security controls to protect private files, but no system can be guaranteed to be completely secure. You are responsible for maintaining the confidentiality of your account credentials.",
-      },
+      { label: "Public Files", text: "Files uploaded to public storage areas or shared via public links may be accessible to any visitor on or off the platform. Public files may appear in platform discovery features and search results. Users who share files publicly accept that their content may be viewed, accessed, or downloaded by third parties. You are solely responsible for ensuring that publicly shared content does not contain sensitive, confidential, or proprietary information." },
+      { label: "Private Files", text: "Files designated as private are restricted to your account and authorized users only. BlueOrbit implements security controls to protect private files, but no system can be guaranteed to be completely secure. You are responsible for maintaining the confidentiality of your account credentials." },
     ],
   },
   {
@@ -112,97 +100,98 @@ const SECTIONS = [
   },
 ];
 
-export default function PrivacyPage() {
+export default function PrivacyModal({ open, onClose }: Props) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
   return (
-    <main className="min-h-screen" style={{ background: "rgb(8,8,20)" }}>
-      {/* Top bar */}
-      <div
-        className="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-8 py-4 border-b border-white/5"
-        style={{ background: "rgba(8,8,20,0.95)", backdropFilter: "blur(12px)" }}
-      >
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          style={{ background: "rgba(5,5,16,0.88)", backdropFilter: "blur(12px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
-          <ArrowLeft size={16} />
-          Back to Home
-        </Link>
-      </div>
+          <motion.div
+            initial={{ scale: 0.93, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.93, opacity: 0, y: 10 }}
+            transition={{ type: "spring", damping: 26, stiffness: 320 }}
+            className="w-full max-w-2xl max-h-[85vh] rounded-2xl overflow-hidden flex flex-col"
+            style={{
+              background: "rgba(13,13,26,0.98)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              boxShadow: "0 24px 80px rgba(0,0,0,0.8)",
+            }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 flex-shrink-0">
+              <div>
+                <p className="text-xs font-semibold tracking-widest text-purple-400 uppercase">Legal</p>
+                <h2 className="text-lg font-bold text-white mt-0.5">Privacy Policy</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Last Updated: June 18, 2026</p>
+              </div>
+              <button onClick={onClose}
+                className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
+                <X size={18} />
+              </button>
+            </div>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-8 py-12 sm:py-16">
-        {/* Header */}
-        <div className="mb-10">
-          <p className="text-xs font-semibold tracking-widest text-purple-400 uppercase mb-3">
-            Legal
-          </p>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
-            Privacy Policy
-          </h1>
-          <p className="text-sm text-slate-500">Last Updated: June 18, 2026</p>
-          <div className="h-px bg-white/5 mt-6" />
-        </div>
+            {/* Scrollable content */}
+            <div className="overflow-y-auto flex-1 px-6 py-6">
+              <p className="text-slate-400 text-sm leading-relaxed mb-8">
+                BlueOrbit Technologies is committed to protecting your privacy. This policy applies to our cloud storage, file hosting, content sharing, and creator monetization services.
+              </p>
+              <div className="space-y-7">
+                {SECTIONS.map((s) => (
+                  <section key={s.title}>
+                    <h3 className="text-sm font-semibold text-white mb-2">{s.title}</h3>
+                    <p className="text-slate-400 text-sm leading-relaxed mb-3">{s.body}</p>
 
-        {/* Intro */}
-        <p className="text-slate-400 text-[15px] leading-relaxed mb-10">
-          BlueOrbit Technologies is committed to protecting your privacy. This policy applies
-          to our cloud storage, file hosting, content sharing, and creator monetization
-          services.
-        </p>
+                    {"items" in s && s.items && (
+                      <ul className="space-y-2 mb-3">
+                        {s.items.map((item) => (
+                          <li key={item} className="flex items-start gap-3 text-slate-400 text-sm leading-relaxed">
+                            <span className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: "#7c3aed" }} />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
 
-        {/* Sections */}
-        <div className="space-y-8">
-          {SECTIONS.map((s) => (
-            <section key={s.title}>
-              <h2 className="text-base font-semibold text-white mb-2">{s.title}</h2>
-              <p className="text-slate-400 text-[15px] leading-relaxed mb-3">{s.body}</p>
+                    {"sub" in s && s.sub && (
+                      <div className="mt-3 space-y-4">
+                        {s.sub.map((sub) => (
+                          <div key={sub.label} className="pl-4 border-l-2 border-purple-500/30">
+                            <p className="text-xs font-bold text-purple-400 uppercase tracking-widest mb-1">{sub.label}</p>
+                            <p className="text-slate-400 text-sm leading-relaxed">{sub.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
-              {"items" in s && s.items && (
-                <ul className="space-y-2 mb-3">
-                  {s.items.map((item) => (
-                    <li
-                      key={item}
-                      className="flex items-start gap-3 text-slate-400 text-[15px] leading-relaxed"
-                    >
-                      <span
-                        className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0"
-                        style={{ background: "#7c3aed" }}
-                      />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {"sub" in s && s.sub && (
-                <div className="mt-3 space-y-4">
-                  {s.sub.map((sub) => (
-                    <div key={sub.label} className="pl-4 border-l-2 border-purple-500/30">
-                      <p className="text-xs font-bold text-purple-400 uppercase tracking-widest mb-1">
-                        {sub.label}
-                      </p>
-                      <p className="text-slate-400 text-[15px] leading-relaxed">{sub.text}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {"footer" in s && s.footer && (
-                <p className="text-slate-500 text-sm mt-3">{s.footer}</p>
-              )}
-            </section>
-          ))}
-        </div>
-
-        {/* Related links */}
-        <div className="mt-12 pt-8 border-t border-white/5 flex flex-wrap gap-4 text-sm">
-          <Link href="/about" className="text-purple-400 hover:text-purple-300 transition-colors">
-            About Us →
-          </Link>
-          <Link href="/terms" className="text-purple-400 hover:text-purple-300 transition-colors">
-            Terms of Service →
-          </Link>
-        </div>
-      </div>
-    </main>
+                    {"footer" in s && s.footer && (
+                      <p className="text-slate-500 text-xs mt-3">{s.footer}</p>
+                    )}
+                  </section>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
