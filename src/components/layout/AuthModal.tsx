@@ -10,7 +10,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   defaultTab?: "login" | "signup";
-  forced?: boolean; // if true, cannot be dismissed
+  forced?: boolean;
 }
 
 export default function AuthModal({ open, onClose, defaultTab = "login", forced = false }: Props) {
@@ -22,20 +22,23 @@ export default function AuthModal({ open, onClose, defaultTab = "login", forced 
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
 
-  // Email verification state
-  const [verifyStep, setVerifyStep] = useState(false);
-  const [generatedOtp, setGeneratedOtp] = useState("");
-  const [otpInput, setOtpInput] = useState("");
-  const [pendingReg, setPendingReg] = useState<{ name: string; email: string; password: string } | null>(null);
+  // After signup — show "check your inbox" screen
+  const [checkInbox, setCheckInbox] = useState(false);
+  const [signupEmail, setSignupEmail] = useState("");
 
   useEffect(() => { setTab(defaultTab); }, [defaultTab]);
-  useEffect(() => { setError(""); setForm({ name: "", email: "", password: "" }); setVerifyStep(false); setOtpInput(""); setPendingReg(null); }, [tab, open]);
+  useEffect(() => {
+    setError("");
+    setForm({ name: "", email: "", password: "" });
+    setCheckInbox(false);
+    setSignupEmail("");
+  }, [tab, open]);
 
   useEffect(() => {
     if (!forced) {
-      const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-      window.addEventListener("keydown", handleKey);
-      return () => window.removeEventListener("keydown", handleKey);
+      const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+      window.addEventListener("keydown", onKey);
+      return () => window.removeEventListener("keydown", onKey);
     }
   }, [forced, onClose]);
 
@@ -44,21 +47,6 @@ export default function AuthModal({ open, onClose, defaultTab = "login", forced 
     else document.body.style.overflow = "";
     return () => { document.body.style.overflow = ""; };
   }, [open]);
-
-  const handleVerifyOtp = async () => {
-    if (otpInput.trim() !== generatedOtp) {
-      setError("Invalid verification code. Please check your email.");
-      return;
-    }
-    // Re-login the verified user (they were registered above but logged out pending verify)
-    const res = await useAuthStore.getState().login(pendingReg!.email, pendingReg!.password);
-    if (res.success) {
-      toast.success("Email verified! Welcome aboard 🎉");
-      onClose();
-    } else {
-      setError("Verification passed but login failed. Please sign in manually.");
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,21 +64,14 @@ export default function AuthModal({ open, onClose, defaultTab = "login", forced 
       }
     } else {
       if (!form.name.trim()) { setError("Please enter your name."); setLoading(false); return; }
-      // Check if email already exists before sending OTP
-      const checkRes = await register(form.name, form.email, form.password);
-      if (!checkRes.success) { setError(checkRes.error || "Registration failed."); setLoading(false); return; }
-      // Immediately log out the just-registered user so they must verify first
-      const { logout } = useAuthStore.getState();
-      logout();
-      // Generate 6-digit OTP
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      setGeneratedOtp(otp);
-      setPendingReg({ name: form.name, email: form.email, password: form.password });
-      setVerifyStep(true);
-      toast(
-        `📧 Verification email sent to ${form.email}\n\nDev mode — your code is: ${otp}`,
-        { duration: 12000, style: { whiteSpace: "pre-line" } }
-      );
+      const res = await register(form.name, form.email, form.password);
+      if (res.success) {
+        // Supabase sends a real confirmation email — just show "check inbox"
+        setSignupEmail(form.email);
+        setCheckInbox(true);
+      } else {
+        setError(res.error || "Registration failed.");
+      }
     }
     setLoading(false);
   };
@@ -122,11 +103,11 @@ export default function AuthModal({ open, onClose, defaultTab = "login", forced 
             <div className="px-6 pt-6 pb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-white">
-                  {verifyStep ? "Verify your email" : tab === "login" ? "Welcome back" : "Create account"}
+                  {checkInbox ? "Check your email" : tab === "login" ? "Welcome back" : "Create account"}
                 </h2>
-                {forced && (
+                {forced && !checkInbox && (
                   <p className="text-xs text-text-muted mt-1">
-                    Sign in or create a free account to continue browsing
+                    Sign in or create a free account to continue
                   </p>
                 )}
               </div>
@@ -137,154 +118,112 @@ export default function AuthModal({ open, onClose, defaultTab = "login", forced 
               )}
             </div>
 
-            {/* Tab switcher */}
-            {!verifyStep && <div className="px-6 mb-5">
-              <div className="flex rounded-xl p-1" style={{ background: "rgba(255,255,255,0.05)" }}>
-                {(["login", "signup"] as const).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setTab(t)}
-                    className="flex-1 py-2 rounded-lg text-sm font-semibold transition-all"
-                    style={tab === t ? {
-                      background: "linear-gradient(135deg, #7c3aed, #3b82f6)",
-                      color: "#fff",
-                    } : { color: "#94a3b8" }}
-                  >
-                    {t === "login" ? "Sign In" : "Sign Up"}
-                  </button>
-                ))}
-              </div>
-            </div>}
+            {/* ── Check Inbox Screen ── */}
+            {checkInbox ? (
+              <div className="px-6 pb-8 flex flex-col items-center text-center gap-4">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)" }}>
+                  <ShieldCheck size={28} className="text-purple-400" />
+                </div>
 
-            {/* OTP Verification Screen */}
-            {verifyStep ? (
-              <div className="px-6 pb-6 space-y-4">
-                <div className="flex flex-col items-center gap-2 py-2">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center mb-1"
-                    style={{ background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)" }}>
-                    <ShieldCheck size={22} className="text-purple-400" />
-                  </div>
-                  <h3 className="text-base font-semibold text-white">Check your email</h3>
-                  <p className="text-xs text-center text-slate-400">
-                    We sent a 6-digit code to<br />
-                    <span className="text-purple-300 font-medium">{pendingReg?.email}</span>
+                <div>
+                  <p className="text-sm text-slate-400 leading-relaxed">
+                    We sent a confirmation link to
+                  </p>
+                  <p className="text-sm font-semibold text-purple-300 mt-1">{signupEmail}</p>
+                  <p className="text-sm text-slate-400 mt-3 leading-relaxed">
+                    Click the link in the email to verify your account, then come back and sign in.
                   </p>
                 </div>
 
-                <div className="relative">
-                  <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={6}
-                    placeholder="Enter 6-digit code"
-                    value={otpInput}
-                    onChange={(e) => { setOtpInput(e.target.value.replace(/\D/g, "")); setError(""); }}
-                    className="input-field pl-10 text-center tracking-[0.3em] text-lg font-bold"
-                    autoFocus
-                  />
-                </div>
-
-                {error && <p className="text-red-400 text-xs px-1">{error}</p>}
-
                 <button
-                  type="button"
-                  onClick={handleVerifyOtp}
-                  disabled={otpInput.length !== 6}
-                  className="btn-primary w-full py-3.5 text-sm disabled:opacity-50"
+                  onClick={() => { setCheckInbox(false); setTab("login"); }}
+                  className="btn-primary w-full py-3 text-sm mt-2"
                 >
-                  Verify Email
+                  Go to Sign In
                 </button>
 
-                <p className="text-center text-xs text-text-muted">
-                  Didn&apos;t get the code?{" "}
-                  <button type="button"
-                    onClick={() => {
-                      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-                      setGeneratedOtp(otp);
-                      setOtpInput("");
-                      setError("");
-                      toast(`📧 New code sent!\n\nDev mode — your code is: ${otp}`, { duration: 12000, style: { whiteSpace: "pre-line" } });
-                    }}
-                    className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
-                    Resend
+                <p className="text-xs text-slate-500">
+                  Didn&apos;t receive it? Check your spam folder or{" "}
+                  <button
+                    type="button"
+                    onClick={() => { setCheckInbox(false); setTab("signup"); }}
+                    className="text-purple-400 hover:text-purple-300 transition-colors"
+                  >
+                    try again
                   </button>
                 </p>
               </div>
-            ) : null}
-
-            {/* Form */}
-            {!verifyStep && <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
-              {tab === "signup" && (
-                <div className="relative">
-                  <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-                  <input
-                    type="text"
-                    placeholder="Full name"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="input-field pl-10"
-                    required
-                  />
+            ) : (
+              <>
+                {/* Tab switcher */}
+                <div className="px-6 mb-5">
+                  <div className="flex rounded-xl p-1" style={{ background: "rgba(255,255,255,0.05)" }}>
+                    {(["login", "signup"] as const).map((t) => (
+                      <button key={t} onClick={() => setTab(t)}
+                        className="flex-1 py-2 rounded-lg text-sm font-semibold transition-all"
+                        style={tab === t
+                          ? { background: "linear-gradient(135deg,#7c3aed,#3b82f6)", color: "#fff" }
+                          : { color: "#94a3b8" }}>
+                        {t === "login" ? "Sign In" : "Sign Up"}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              )}
 
-              <div className="relative">
-                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-                <input
-                  type="email"
-                  placeholder="Email address"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="input-field pl-10"
-                  required
-                />
-              </div>
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
+                  {tab === "signup" && (
+                    <div className="relative">
+                      <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+                      <input type="text" placeholder="Full name" value={form.name}
+                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        className="input-field pl-10" required />
+                    </div>
+                  )}
 
-              <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-                <input
-                  type={showPw ? "text" : "password"}
-                  placeholder={tab === "signup" ? "Password (min 6 chars)" : "Password"}
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  className="input-field pl-10 pr-11"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-white transition-colors"
-                >
-                  {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
+                  <div className="relative">
+                    <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+                    <input type="email" placeholder="Email address" value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      className="input-field pl-10" required />
+                  </div>
 
-              {error && (
-                <p className="text-red-400 text-xs px-1">{error}</p>
-              )}
+                  <div className="relative">
+                    <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+                    <input
+                      type={showPw ? "text" : "password"}
+                      placeholder={tab === "signup" ? "Password (min 6 chars)" : "Password"}
+                      value={form.password}
+                      onChange={(e) => setForm({ ...form, password: e.target.value })}
+                      className="input-field pl-10 pr-11" required />
+                    <button type="button" onClick={() => setShowPw(!showPw)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-white transition-colors">
+                      {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-primary w-full py-3.5 text-sm"
-              >
-                {loading ? (
-                  <span className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    {tab === "login" ? "Signing in..." : "Creating account..."}
-                  </span>
-                ) : tab === "login" ? "Sign In" : "Create Account"}
-              </button>
+                  {error && <p className="text-red-400 text-xs px-1">{error}</p>}
 
-              <p className="text-center text-xs text-text-muted">
-                {tab === "login" ? "Don't have an account? " : "Already have an account? "}
-                <button type="button" onClick={() => setTab(tab === "login" ? "signup" : "login")}
-                  className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
-                  {tab === "login" ? "Sign Up" : "Sign In"}
-                </button>
-              </p>
-            </form>}
+                  <button type="submit" disabled={loading} className="btn-primary w-full py-3.5 text-sm">
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        {tab === "login" ? "Signing in..." : "Creating account..."}
+                      </span>
+                    ) : tab === "login" ? "Sign In" : "Create Account"}
+                  </button>
+
+                  <p className="text-center text-xs text-text-muted">
+                    {tab === "login" ? "Don't have an account? " : "Already have an account? "}
+                    <button type="button" onClick={() => setTab(tab === "login" ? "signup" : "login")}
+                      className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
+                      {tab === "login" ? "Sign Up" : "Sign In"}
+                    </button>
+                  </p>
+                </form>
+              </>
+            )}
           </motion.div>
         </motion.div>
       )}
