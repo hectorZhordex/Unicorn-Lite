@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import {
   X, Upload, CheckCircle2, Image as ImageIcon,
   Link as LinkIcon, Cloud, ExternalLink, Info
