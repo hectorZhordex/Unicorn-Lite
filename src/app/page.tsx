@@ -77,12 +77,12 @@ function HomeContent() {
 
           {/* Headline */}
           <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold leading-[1.05] tracking-tight text-white mb-5 sm:mb-6">
-            Store. Share.{" "}
+            Enterprise-Secured {" "}
             <br className="hidden sm:block" />
             <span style={{
               background: "linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #34d399 100%)",
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-            }}>Earn.</span>
+            }}>Cloud Sharing</span>
           </h1>
 
           <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-2">
