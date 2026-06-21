@@ -1,18 +1,24 @@
-"use client";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
-import { useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+export const metadata: Metadata = {
+  title: "Privacy Policy | BlueOrbit Technologies",
+  description:
+    "Learn how BlueOrbit Technologies collects, uses, stores, and protects your personal information when you use our cloud storage and file hosting platform.",
+  openGraph: {
+    title: "Privacy Policy | BlueOrbit Technologies",
+    description:
+      "BlueOrbit Technologies Privacy Policy — data collection, usage, storage, sharing, and your rights as a user.",
+    type: "website",
+  },
+};
 
-interface Props {
-  open: boolean;
-  onClose: () => void;
-}
-
+/* ── Shared content (same data as PrivacyModal SECTIONS) ── */
 const SECTIONS = [
   {
     title: "1. Introduction",
-    body: "BlueOrbit Technologies (\"BlueOrbit,\" \"we,\" \"our,\" or \"us\") is committed to protecting your privacy and handling your personal information responsibly. This Privacy Policy explains how we collect, use, store, share, and protect your information when you use our cloud storage, file hosting, content sharing, and creator monetization platform. By using BlueOrbit services, you agree to the practices described in this Privacy Policy.",
+    body: 'BlueOrbit Technologies ("BlueOrbit," "we," "our," or "us") is committed to protecting your privacy and handling your personal information responsibly. This Privacy Policy explains how we collect, use, store, share, and protect your information when you use our cloud storage, file hosting, content sharing, and creator monetization platform. By using BlueOrbit services, you agree to the practices described in this Privacy Policy.',
   },
   {
     title: "2. Information We Collect",
@@ -106,98 +112,97 @@ const SECTIONS = [
   },
 ];
 
-export default function PrivacyModal({ open, onClose }: Props) {
-  useEffect(() => {
-    if (open) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "";
-    return () => { document.body.style.overflow = ""; };
-  }, [open]);
-
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [onClose]);
-
+export default function PrivacyPage() {
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(5,5,16,0.88)", backdropFilter: "blur(10px)" }}
-          onClick={(e) => e.target === e.currentTarget && onClose()}
+    <main className="min-h-screen" style={{ background: "rgb(8,8,20)" }}>
+      {/* Top bar */}
+      <div
+        className="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-8 py-4 border-b border-white/5"
+        style={{ background: "rgba(8,8,20,0.95)", backdropFilter: "blur(12px)" }}
+      >
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
         >
-          <motion.div
-            initial={{ scale: 0.92, opacity: 0, y: 24 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.92, opacity: 0, y: 12 }}
-            transition={{ type: "spring", damping: 26, stiffness: 320 }}
-            className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden"
-            style={{
-              background: "rgba(13,13,26,0.97)",
-              border: "1px solid rgba(255,255,255,0.07)",
-              boxShadow: "0 24px 80px rgba(0,0,0,0.7)",
-            }}
-          >
-            <div className="flex items-center justify-between px-6 py-5 border-b border-white/5 flex-shrink-0">
-              <div>
-                <h2 className="text-base font-bold text-white">Privacy Policy</h2>
-                <p className="text-xs text-text-muted mt-0.5">Last Updated: June 18, 2026</p>
-              </div>
-              <button onClick={onClose} className="p-2 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-colors">
-                <X size={18} />
-              </button>
-            </div>
+          <ArrowLeft size={16} />
+          Back to Home
+        </Link>
+      </div>
 
-            <div className="overflow-y-auto flex-1 px-6 py-6 space-y-5 text-sm leading-relaxed"
-              style={{ scrollbarWidth: "thin", scrollbarColor: "#2a2a55 transparent" }}>
+      <div className="max-w-3xl mx-auto px-4 sm:px-8 py-12 sm:py-16">
+        {/* Header */}
+        <div className="mb-10">
+          <p className="text-xs font-semibold tracking-widest text-purple-400 uppercase mb-3">
+            Legal
+          </p>
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+            Privacy Policy
+          </h1>
+          <p className="text-sm text-slate-500">Last Updated: June 18, 2026</p>
+          <div className="h-px bg-white/5 mt-6" />
+        </div>
 
-              <p className="text-text-muted">
-                BlueOrbit Technologies is committed to protecting your privacy. This policy applies to our cloud storage, file hosting, content sharing, and creator monetization services.
-              </p>
+        {/* Intro */}
+        <p className="text-slate-400 text-[15px] leading-relaxed mb-10">
+          BlueOrbit Technologies is committed to protecting your privacy. This policy applies
+          to our cloud storage, file hosting, content sharing, and creator monetization
+          services.
+        </p>
 
-              {SECTIONS.map((s) => (
-                <div key={s.title}>
-                  <h3 className="text-sm font-semibold text-white mb-1.5">{s.title}</h3>
-                  <p className="text-text-secondary mb-2">{s.body}</p>
-                  {"items" in s && s.items && (
-                    <ul className="space-y-1.5 pl-3 mb-2">
-                      {s.items.map((item) => (
-                        <li key={item} className="flex items-start gap-2 text-text-muted">
-                          <span className="w-1 h-1 rounded-full bg-purple-400 mt-2 flex-shrink-0" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {"sub" in s && s.sub && (
-                    <div className="mt-2 space-y-3">
-                      {s.sub.map((sub) => (
-                        <div key={sub.label} className="pl-4 border-l border-white/10">
-                          <p className="text-xs font-semibold text-text-primary mb-1 uppercase tracking-wide">{sub.label}</p>
-                          <p className="text-text-muted">{sub.text}</p>
-                        </div>
-                      ))}
+        {/* Sections */}
+        <div className="space-y-8">
+          {SECTIONS.map((s) => (
+            <section key={s.title}>
+              <h2 className="text-base font-semibold text-white mb-2">{s.title}</h2>
+              <p className="text-slate-400 text-[15px] leading-relaxed mb-3">{s.body}</p>
+
+              {"items" in s && s.items && (
+                <ul className="space-y-2 mb-3">
+                  {s.items.map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-start gap-3 text-slate-400 text-[15px] leading-relaxed"
+                    >
+                      <span
+                        className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0"
+                        style={{ background: "#7c3aed" }}
+                      />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {"sub" in s && s.sub && (
+                <div className="mt-3 space-y-4">
+                  {s.sub.map((sub) => (
+                    <div key={sub.label} className="pl-4 border-l-2 border-purple-500/30">
+                      <p className="text-xs font-bold text-purple-400 uppercase tracking-widest mb-1">
+                        {sub.label}
+                      </p>
+                      <p className="text-slate-400 text-[15px] leading-relaxed">{sub.text}</p>
                     </div>
-                  )}
-                  {"footer" in s && s.footer && (
-                    <p className="text-text-muted text-sm mt-2">{s.footer}</p>
-                  )}
+                  ))}
                 </div>
-              ))}
-            </div>
+              )}
 
-            <div className="px-6 py-4 border-t border-white/5 flex-shrink-0">
-              <button onClick={onClose} className="btn-primary w-full py-3 text-sm">
-                I Understand
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+              {"footer" in s && s.footer && (
+                <p className="text-slate-500 text-sm mt-3">{s.footer}</p>
+              )}
+            </section>
+          ))}
+        </div>
+
+        {/* Related links */}
+        <div className="mt-12 pt-8 border-t border-white/5 flex flex-wrap gap-4 text-sm">
+          <Link href="/about" className="text-purple-400 hover:text-purple-300 transition-colors">
+            About Us →
+          </Link>
+          <Link href="/terms" className="text-purple-400 hover:text-purple-300 transition-colors">
+            Terms of Service →
+          </Link>
+        </div>
+      </div>
+    </main>
   );
 }
