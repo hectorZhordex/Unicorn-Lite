@@ -53,6 +53,7 @@ export default function UserUploadModal({ open, onClose }: Props) {
       return;
     }
     setPreviewFile(f);
+    // Use object URL only for local preview display
     setPreviewUrl(URL.createObjectURL(f));
   };
 
@@ -87,15 +88,23 @@ export default function UserUploadModal({ open, onClose }: Props) {
           contentType: previewFile.type,
         });
 
+      // Convert file to base64 as universal fallback (works on all devices)
+      const toBase64 = (file: File): Promise<string> =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
       if (storageError) {
-        // Fall back to local object URL silently
         console.warn("Supabase storage:", storageError.message);
       }
 
       setUploadProgress("Saving file info...");
 
-      // Get public URL from Supabase or fall back to local
-      let finalPreviewUrl = previewUrl;
+      // Get public URL from Supabase, or fall back to base64 (works everywhere)
+      let finalPreviewUrl = await toBase64(previewFile);
       if (!storageError && storageData) {
         const { data: urlData } = supabase.storage
           .from("previews")
