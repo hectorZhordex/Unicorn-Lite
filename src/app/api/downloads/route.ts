@@ -1,35 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
-    const { artwork_id, session_id } = await req.json();
-    if (!artwork_id || !session_id) {
-      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
-    }
+    const { artwork_id } = await req.json();
+    if (!artwork_id) return NextResponse.json({ error: "artwork_id required" }, { status: 400 });
 
     const supabase = createServiceClient();
 
-    // Verify unlocked
-    const { data: verification } = await supabase
-      .from("verifications")
-      .select("completed")
-      .eq("artwork_id", artwork_id)
-      .eq("session_id", session_id)
-      .maybeSingle();
+    // Get current downloads then increment by 1
+    const { data: artwork } = await supabase
+      .from("artworks")
+      .select("downloads")
+      .eq("id", artwork_id)
+      .single();
 
-    if (!verification?.completed) {
-      return NextResponse.json({ error: "Not verified" }, { status: 403 });
-    }
+    const currentDownloads = artwork?.downloads || 0;
 
-    // Record download
-    await supabase.from("downloads").insert([{ artwork_id, session_id }]);
+    await supabase
+      .from("artworks")
+      .update({ downloads: currentDownloads + 1 })
+      .eq("id", artwork_id);
 
-    // Increment download count
-    await supabase.rpc("increment_downloads", { artwork_id });
-
-    return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json({ success: true, downloads: currentDownloads + 1 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
