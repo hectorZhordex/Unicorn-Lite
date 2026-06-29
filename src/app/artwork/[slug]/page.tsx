@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { m as motion } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   ArrowLeft, Eye, Download, Heart, Share2,
   Tag, Monitor, FileArchive, Layers, Lock,
@@ -16,38 +16,17 @@ import VerificationModal from "@/components/verification/VerificationModal";
 import { type Artwork } from "@/types";
 import { formatNumber } from "@/lib/utils";
 
-// Mock — replace with Supabase fetch
+// Fetch real artwork from Supabase via API
 async function getArtwork(slug: string): Promise<Artwork | null> {
-  const idx = parseInt(slug.split("-")[1]) - 1;
-  if (isNaN(idx)) return null;
-  return {
-    id: `art-${idx + 1}`,
-    title: [
-      "Modern Brand Identity Pack", "Neon City Wallpaper", "Corporate Flyer Template",
-      "Mobile App Mockup Kit", "Gradient Logo Collection", "Social Media Bundle",
-    ][idx % 6],
-    slug,
-    description: "A comprehensive premium design resource featuring multiple variations, formats, and styles. Perfect for both personal and commercial projects. Includes fully layered PSD files, vector-based AI files, and high-resolution PNG exports. All elements are well-organized and easy to customize.",
-    preview_url: `https://picsum.photos/seed/${idx + 10}/1200/800`,
-    download_url: "#",
-    category_id: ["logos","posters","flyers","mockups"][idx % 4],
-    category: {
-      id: `cat-${idx % 4}`,
-      name: ["Logos","Posters","Flyers","Mockups"][idx % 4],
-      slug: ["logos","posters","flyers","mockups"][idx % 4],
-      created_at: new Date().toISOString(),
-    },
-    tags: ["design", "premium", "template", "vector", "psd", "professional"],
-    resolution: "3840×2160",
-    file_size: "48.5 MB",
-    file_format: "PSD, AI, PNG, ZIP",
-    views: Math.floor(Math.random() * 5000 + 500),
-    downloads: Math.floor(Math.random() * 2000 + 100),
-    is_featured: idx < 2,
-    is_active: true,
-    created_at: new Date(Date.now() - idx * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-  };
+  try {
+    const res = await fetch(`/api/artworks?limit=100`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const artworks: Artwork[] = data.artworks || [];
+    return artworks.find((a) => a.slug === slug) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export default function ArtworkPage() {
