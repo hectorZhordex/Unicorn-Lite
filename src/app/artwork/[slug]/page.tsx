@@ -42,6 +42,14 @@ export default function ArtworkPage() {
     getArtwork(slug).then((a) => {
       setArtwork(a);
       setLoading(false);
+      // Track view — fire and forget
+      if (a?.id) {
+        fetch("/api/views", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ artwork_id: a.id }),
+        }).catch(() => {});
+      }
     });
   }, [slug]);
 
