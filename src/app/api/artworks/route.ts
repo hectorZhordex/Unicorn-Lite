@@ -9,6 +9,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const category = searchParams.get("category");
   const q = searchParams.get("q");
+  const slug = searchParams.get("slug");
   const limit = parseInt(searchParams.get("limit") || "50");
   const offset = parseInt(searchParams.get("offset") || "0");
 
@@ -22,8 +23,10 @@ export async function GET(req: NextRequest) {
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
 
+    if (slug) {
+      query = query.eq("slug", slug);
+    }
     if (category && category !== "all") {
-      // join filter on category slug
       query = query.eq("categories.slug", category);
     }
     if (q) {
