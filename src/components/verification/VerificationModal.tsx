@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   X, ExternalLink, CheckCircle2, Circle, Clock,
   Download, Shield, Zap, ArrowRight, Lock
@@ -119,7 +119,7 @@ export default function VerificationModal({ artwork, onClose }: Props) {
       await fetch("/api/downloads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ artwork_id: artwork.id, session_id: getSessionId() }),
+        body: JSON.stringify({ artwork_id: artwork.id }),
       });
     } catch {}
 
