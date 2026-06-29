@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -64,13 +64,49 @@ export default function AdminPage() {
     }
   };
 
-  const toggleActive = (id: string) =>
-    setArtworks((prev) => prev.map((a) => (a.id === id ? { ...a, is_active: !a.is_active } : a)));
-  const toggleFeatured = (id: string) =>
-    setArtworks((prev) => prev.map((a) => (a.id === id ? { ...a, is_featured: !a.is_featured } : a)));
-  const deleteArtwork = (id: string) => {
+  const toggleActive = async (id: string) => {
+    const artwork = artworks.find((a) => a.id === id);
+    if (!artwork) return;
+    const newVal = !artwork.is_active;
+    setArtworks((prev) => prev.map((a) => (a.id === id ? { ...a, is_active: newVal } : a)));
+    try {
+      await fetch("/api/artworks", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, is_active: newVal }),
+      });
+    } catch { toast.error("Failed to update visibility"); }
+  };
+
+  const toggleFeatured = async (id: string) => {
+    const artwork = artworks.find((a) => a.id === id);
+    if (!artwork) return;
+    const newVal = !artwork.is_featured;
+    setArtworks((prev) => prev.map((a) => (a.id === id ? { ...a, is_featured: newVal } : a)));
+    try {
+      await fetch("/api/artworks", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, is_featured: newVal }),
+      });
+    } catch { toast.error("Failed to update featured status"); }
+  };
+
+  const deleteArtwork = async (id: string) => {
     setArtworks((prev) => prev.filter((a) => a.id !== id));
     setDeleteConfirm(null);
+    try {
+      const res = await fetch(`/api/artworks?id=${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error);
+      }
+      toast.success("Artwork deleted.");
+    } catch (e: any) {
+      toast.error("Delete failed: " + e.message);
+      // Re-fetch to restore correct state
+      fetch("/api/artworks?limit=50").then((r) => r.json()).then((d) => setArtworks(d.artworks || []));
+    }
   };
 
   if (!authenticated) {
