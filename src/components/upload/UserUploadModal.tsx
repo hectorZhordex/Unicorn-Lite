@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Upload, CheckCircle2, Image as ImageIcon,
   Link as LinkIcon, Cloud, ExternalLink, Info
@@ -88,9 +88,8 @@ export default function UserUploadModal({ open, onClose }: Props) {
         });
 
       if (storageError) {
-        // If Supabase not connected yet, fall back to local object URL
-        console.warn("Supabase storage not available, using local URL:", storageError.message);
-        toast("Supabase not connected — preview stored locally for now.", { icon: "⚠️" });
+        // Fall back to local object URL silently
+        console.warn("Supabase storage:", storageError.message);
       }
 
       setUploadProgress("Saving file info...");
