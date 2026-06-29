@@ -18,6 +18,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "5mb",
+    },
+  },
   // Removed optimizePackageImports entirely — Next.js 15's barrel
   // optimization generates eval() calls which are blocked by CSP headers,
   // causing all framer-motion animations to silently stay at opacity:0 (blank page).
