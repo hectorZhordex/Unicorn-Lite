@@ -88,13 +88,23 @@ export default function UserUploadModal({ open, onClose }: Props) {
           contentType: previewFile.type,
         });
 
-      // Convert file to base64 as universal fallback (works on all devices)
-      const toBase64 = (file: File): Promise<string> =>
+      // Compress + convert to base64 fallback (max 600px, JPEG 75% — keeps it small)
+      const compressToBase64 = (file: File): Promise<string> =>
         new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
+          const img = new Image();
+          const blobUrl = URL.createObjectURL(file);
+          img.onload = () => {
+            URL.revokeObjectURL(blobUrl);
+            const MAX = 600;
+            let { width, height } = img;
+            if (width > MAX) { height = Math.round((height * MAX) / width); width = MAX; }
+            const canvas = document.createElement("canvas");
+            canvas.width = width; canvas.height = height;
+            canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL("image/jpeg", 0.75));
+          };
+          img.onerror = reject;
+          img.src = blobUrl;
         });
 
       if (storageError) {
@@ -103,8 +113,8 @@ export default function UserUploadModal({ open, onClose }: Props) {
 
       setUploadProgress("Saving file info...");
 
-      // Get public URL from Supabase, or fall back to base64 (works everywhere)
-      let finalPreviewUrl = await toBase64(previewFile);
+      // Use Supabase CDN URL if available, else compressed base64 (works everywhere)
+      let finalPreviewUrl = await compressToBase64(previewFile);
       if (!storageError && storageData) {
         const { data: urlData } = supabase.storage
           .from("previews")
